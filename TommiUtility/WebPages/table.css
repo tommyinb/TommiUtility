@@ -1,0 +1,53 @@
+﻿.table, .tr, .th, .td {
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: 0 none;
+}
+
+.table {
+    display: table;
+}
+
+.tr {
+    display: table-row;
+}
+
+.th, .td {
+    display: table-cell;
+}
+
+th, .th {
+    padding: 0 1em 0 0;
+    opacity: .6;
+}
+
+    th.asc::after,
+    .th.asc::after {
+        content: '▲';
+        font-size: .7em;
+        margin: 0 .5em 0 .5em;
+        vertical-align: top;
+    }
+
+    th.desc::after,
+    .th.desc::after {
+        content: '▼';
+        font-size: .7em;
+        margin: 0 .5em 0 .5em;
+        vertical-align: top;
+    }
+
+td, .td {
+    padding: .3em 1em .3em 0em;
+    border: 0 none;
+}
+
+    td:first-of-type,
+    .td:first-of-type {
+        padding-left: 0;
+    }
+
+    td:last-of-type,
+    .td:last-of-type {
+        padding-right: 0;
+    }

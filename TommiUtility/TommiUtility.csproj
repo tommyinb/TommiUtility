@@ -1,0 +1,183 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{636A1CEF-12D2-4AF0-A291-A31BD98FAFB4}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>TommiUtility</RootNamespace>
+    <AssemblyName>TommiUtility</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EntityFramework">
+      <HintPath>..\packages\EntityFramework.6.1.1\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer">
+      <HintPath>..\packages\EntityFramework.6.1.1\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.Entity.Design" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Binding\DependencyPropertyRegister.cs" />
+    <Compile Include="Binding\FileCollection.cs" />
+    <Compile Include="Binding\NotifyPropertyRegister.cs" />
+    <Compile Include="Box.cs" />
+    <Compile Include="Collections\ArrayUtil.cs" />
+    <Compile Include="Collections\CollectionUtil.cs" />
+    <Compile Include="Collections\FileCollection.cs" />
+    <Compile Include="Collections\ListUtil.cs" />
+    <Compile Include="Delegates\ActionUtil.cs" />
+    <Compile Include="Collections\DictionaryLookUp.cs" />
+    <Compile Include="Delegates\FuncUtil.cs" />
+    <Compile Include="Delegates\MethodCache.cs" />
+    <Compile Include="EntityFramework\DbContextUtil.cs" />
+    <Compile Include="EntityFramework\QueryableUtil.cs" />
+    <Compile Include="Collections\EnumerableUtil.cs" />
+    <Compile Include="FileSystem\DirectoryUtil.cs" />
+    <Compile Include="FileSystem\FileCollection.cs" />
+    <Compile Include="FileSystem\FileSearch.cs" />
+    <Compile Include="FileSystem\FileUtil.cs" />
+    <Compile Include="FileSystem\LogWriter.cs" />
+    <Compile Include="FileSystem\PathComparator.cs" />
+    <Compile Include="FileSystem\ProjectFile.cs" />
+    <Compile Include="FileSystem\StreamUtil.cs" />
+    <Compile Include="ImageProcessing\RedGreenTransparency.cs" />
+    <Compile Include="Logging\LogWriter.cs" />
+    <Compile Include="ProgramFlow\LazyUtil.cs" />
+    <Compile Include="Logging\DailyLogger.cs" />
+    <Compile Include="Mathematics\AlphabetNumeral.cs" />
+    <Compile Include="Mathematics\Range.cs" />
+    <Compile Include="MicrosoftOffice\AlphabetNumeral.cs" />
+    <Compile Include="MicrosoftOffice\ExcelFile.cs" />
+    <Compile Include="ObjectUtil.cs" />
+    <Compile Include="ProgramFlow\ArgumentReader.cs" />
+    <Compile Include="ProgramFlow\MessageLoop.cs" />
+    <Compile Include="ProgramFlow\PredicateWait.cs" />
+    <Compile Include="ProgramFlow\TryUtil.cs" />
+    <Compile Include="Threading\PredicateWait.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Randomize\RandomDraw.cs" />
+    <Compile Include="Randomize\RandomUtil.cs" />
+    <Compile Include="Runtime\Compiler.cs" />
+    <Compile Include="Text\EscapeJoin.cs" />
+    <Compile Include="Text\StringUtil.cs" />
+    <Compile Include="Runtime\CodeUtil.cs" />
+    <Compile Include="TextTemplate\ProjectReader.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ProjectReader.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Threading\MessageLoop.cs" />
+    <Compile Include="Delegates\TryUtil.cs" />
+    <Compile Include="Web\BasicServer.cs" />
+    <Compile Include="Web\CookieUtil.cs" />
+    <Compile Include="Web\CookieWebClient.cs" />
+    <Compile Include="Web\EmailClient.cs" />
+    <Compile Include="Web\FastHttpRequest.cs" />
+    <Compile Include="Web\HttpListenerUtil.cs" />
+    <Compile Include="Web\JavascriptUtil.cs" />
+    <Compile Include="Web\StandardTime.cs" />
+    <Compile Include="Web\SimpleServer.cs" />
+    <Compile Include="Web\SoapClient.cs" />
+    <Compile Include="Windows\ArgumentReader.cs" />
+    <Compile Include="Windows\Imperson.cs" />
+    <Compile Include="Windows\Keyboard.cs" />
+    <Compile Include="Windows\KeyboardHook.cs" />
+    <Compile Include="Windows\Mouse.cs" />
+    <Compile Include="Windows\MouseHook.cs" />
+    <Compile Include="Windows\RecycleBin.cs" />
+    <Compile Include="Windows\Shortcut.cs" />
+    <Compile Include="Windows\Window.cs" />
+    <Compile Include="Winform\ArgumentReader.cs" />
+    <Compile Include="Winform\ControlUtil.cs" />
+    <Compile Include="Wpf\ArgumentReader.cs" />
+    <Compile Include="Wpf\DependencyPropertyRegister.cs" />
+    <Compile Include="Wpf\EnumBooleanConverter.cs" />
+    <Compile Include="Wpf\InverseBooleanConverter.cs" />
+    <Compile Include="Wpf\ListBoxQuickSearch.cs" />
+    <Compile Include="Wpf\NotifyPropertyRegister.cs" />
+    <Compile Include="Wpf\TemplateSelector.cs" />
+    <Compile Include="Wpf\StringArrayTextConverter.cs" />
+    <Compile Include="Xml\XmlUtil.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+    <None Include="TextTemplate\ProjectReader.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ProjectReader.cs</LastGenOutput>
+    </None>
+    <None Include="TextTemplate\ProjectReaderTest.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ProjectReaderTest.txt</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="TextTemplate\ProjectReaderTest.txt">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ProjectReaderTest.tt</DependentUpon>
+    </Content>
+    <Content Include="WebPages\anime.css" />
+    <Content Include="WebPages\site.css" />
+    <Content Include="WebPages\table.css" />
+    <Content Include="WebPages\utility.css" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

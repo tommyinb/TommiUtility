@@ -1,0 +1,45 @@
+﻿* {
+    font-size: inherit;
+    font-family: inherit;
+    font-weight: inherit;
+    text-decoration: inherit;
+    text-align: inherit;
+    border: none;
+    color: inherit;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-weight: 300;
+    font-size: 15pt;
+}
+
+a {
+    text-decoration: none;
+}
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+header, footer, hgroup,
+nav, section {
+    display: block;
+}
+
+table, th, tr, td {
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: 0 none;
+}
+
+ul, ol, li {
+    margin: 0;
+}
+
+pre {
+    display: inline-block;
+    margin: 0;
+}
+

@@ -1,0 +1,10 @@
+﻿.float-container::after {
+  content: "";
+  display: table;
+  clear: both;
+  *zoom: 1; /* for IE7- */
+}
+
+.margin-bottom {
+    margin-bottom: 1em;
+}

@@ -1,0 +1,8 @@
+﻿
+
+Classes in \Text\StringUtil.cs:
+
+TommiUtility.Text.StringUtil
+TommiUtility.Text.StringUtilTest
+
+Template works correctly.

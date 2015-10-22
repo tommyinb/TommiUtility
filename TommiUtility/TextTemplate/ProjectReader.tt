@@ -1,0 +1,94 @@
+﻿<#@ assembly name="envdte" #>
+<#@ assembly name="System" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="EnvDTE" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#+
+public class ProjectReader
+{
+    public ProjectReader(IServiceProvider serviceProvider)
+    {
+        var dteService = serviceProvider.GetService(typeof(DTE));
+
+        this.Dte = (EnvDTE.DTE)dteService;
+    }
+    public DTE Dte { get; private set; }
+
+	public ProjectItem GetProjectItem(params string[] path)
+	{
+		if (path == null)
+			throw new ArgumentNullException();
+		
+		if (path.Length <= 0)
+			throw new ArgumentException();
+
+		var projectMainItems = Dte.Solution.Projects.Cast<Project>()
+			.SelectMany(t => t.ProjectItems.Cast<ProjectItem>());
+		var mainItemName = path.First();
+
+		var currItem = projectMainItems.First(t =>
+			t.Name == mainItemName);
+
+		foreach (var part in path.Skip(1))
+		{
+			var subItems = currItem.ProjectItems.Cast<ProjectItem>();
+
+			currItem = subItems.First(t =>
+				t.Name == part);
+		}
+
+		return currItem;
+	}
+
+	public IEnumerable<CodeClass> GetClasses(ProjectItem item)
+	{
+		if (item.FileCodeModel == null)
+			yield break;
+
+		var codeNamespaces = item.FileCodeModel.CodeElements
+			.OfType<EnvDTE.CodeNamespace>();
+
+		foreach (var codeNamespace in codeNamespaces)
+		{
+			var codeClasses = codeNamespace.Members
+				.OfType<EnvDTE.CodeClass>();
+
+			foreach (var codeClass in codeClasses)
+			{
+				yield return codeClass;
+			}
+		}
+	}
+
+	public IEnumerable<CodeProperty> GetProperties(CodeClass codeClass)
+	{
+		var currProperties = codeClass.Members.OfType<EnvDTE.CodeProperty>()
+			.Where(t => t.Access == vsCMAccess.vsCMAccessPublic);
+
+		foreach (var currProperty in currProperties)
+		{
+			yield return currProperty;
+		}
+
+		var baseClasses = codeClass.Bases.OfType<CodeClass>();
+
+		foreach (var baseClass in baseClasses)
+		{
+			if (baseClass.Name == "object")
+				continue;
+
+			var baseProperties = GetProperties(baseClass);
+
+			foreach (var baseProperty in baseProperties)
+			{
+				yield return baseProperty;
+			}
+		}
+	}
+}
+#>

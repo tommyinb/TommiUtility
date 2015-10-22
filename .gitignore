@@ -1,0 +1,6 @@
+/.svn
+/*.suo
+/packages
+/TestResults
+/TommiUtility/obj
+/TommiUtility/bin
