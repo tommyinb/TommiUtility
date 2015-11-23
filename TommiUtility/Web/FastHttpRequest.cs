@@ -34,7 +34,6 @@ namespace TommiUtility.Web
             var request = HttpWebRequest.CreateHttp(requestUriString);
 
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
-            request.Host = "reserve.cdn-apple.com";
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36";
 
             request.Proxy = null;
