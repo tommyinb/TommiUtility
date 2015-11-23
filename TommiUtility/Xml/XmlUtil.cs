@@ -16,11 +16,22 @@ namespace TommiUtility.Xml
         {
             var serializer = new XmlSerializer(typeof(T));
 
-            using (var writer = new StringWriter())
+            using (var stringWriter = new StringWriter())
             {
-                serializer.Serialize(writer, @object);
+                var xmlSettings = new XmlWriterSettings
+                {
+                    OmitXmlDeclaration = true,
+                    Indent = true
+                };
+                using (var xmlWriter = XmlWriter.Create(stringWriter, xmlSettings))
+                {
+                    var xmlNamespaces = new XmlSerializerNamespaces();
+                    xmlNamespaces.Add(string.Empty, string.Empty);
 
-                return writer.ToString();
+                    serializer.Serialize(xmlWriter, @object, xmlNamespaces);
+                }
+
+                return stringWriter.ToString();
             }
         }
         public static T Deserialize<T>(string xml)
@@ -37,23 +48,15 @@ namespace TommiUtility.Xml
 
         public static void WriteFile<T>(T @object, string filePath)
         {
-            var serializer = new XmlSerializer(typeof(T));
+            var xml = Serialize(@object);
 
-            using (var fileStream = File.Open(filePath, FileMode.Create))
-            {
-                serializer.Serialize(fileStream, @object);
-            }
+            File.WriteAllText(filePath, xml);
         }
         public static T ReadFile<T>(string filePath)
         {
-            var serializer = new XmlSerializer(typeof(T));
+            var xml = File.ReadAllText(filePath);
 
-            using (var fileStream = File.OpenRead(filePath))
-            {
-                var @object = serializer.Deserialize(fileStream);
-
-                return (T)@object;
-            }
+            return Deserialize<T>(xml);
         }
 
         public static XmlElement AddElement(this XmlNode node, string name)
@@ -73,6 +76,23 @@ namespace TommiUtility.Xml
 
             return element;
         }
+
+        public static string GetIndentedXml(this XmlDocument xmlDocument)
+        {
+            var stringBuilder = new StringBuilder();
+            
+            var writerSettings = new XmlWriterSettings
+            {
+                Indent = true,
+                OmitXmlDeclaration = true
+            };
+            using (var writer = XmlWriter.Create(stringBuilder, writerSettings))
+            {
+                xmlDocument.Save(writer);
+            }
+
+            return stringBuilder.ToString();
+        }
     }
 
     [TestClass]
@@ -86,13 +106,18 @@ namespace TommiUtility.Xml
         [TestMethod]
         public void TestSerialize()
         {
-            var tester = new TestClass { Text = "123" };
+            var tester = new TestClass[] {
+                new TestClass { Text = "123" },
+                new TestClass { Text = "234" }
+            };
 
             var xml = XmlUtil.Serialize(tester);
 
-            var testee = XmlUtil.Deserialize<TestClass>(xml);
+            var testee = XmlUtil.Deserialize<TestClass[]>(xml);
 
-            Assert.AreEqual(tester.Text, testee.Text);
+            Assert.AreEqual(tester.Length, testee.Length);
+            Assert.AreEqual(tester.First().Text, testee.First().Text);
+            Assert.AreEqual(tester.Last().Text, testee.Last().Text);
         }
 
         [TestMethod]
@@ -120,6 +145,16 @@ namespace TommiUtility.Xml
 
             document.DocumentElement.AddElement("xyz");
             Assert.IsNotNull(document.DocumentElement["xyz"]);
+        }
+
+        [TestMethod]
+        public void TestGetIndentedXml()
+        {
+            var document = new XmlDocument();
+            document.LoadXml("<abc><bcd>1</bcd><cde>2</cde></abc>");
+
+            var xml = document.GetIndentedXml();
+            Assert.AreEqual("<abc>\r\n  <bcd>1</bcd>\r\n  <cde>2</cde>\r\n</abc>", xml);
         }
     }
 }
