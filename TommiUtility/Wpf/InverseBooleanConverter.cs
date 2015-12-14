@@ -14,8 +14,7 @@ namespace TommiUtility.Wpf
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool == false)
-                return DependencyProperty.UnsetValue;
+            if (value is bool == false) return DependencyProperty.UnsetValue;
 
             return !(bool)value;
         }

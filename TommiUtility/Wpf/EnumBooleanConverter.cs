@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -14,8 +15,7 @@ namespace TommiUtility.Wpf
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (parameter is string == false)
-                return DependencyProperty.UnsetValue;
+            if (parameter is string == false) return DependencyProperty.UnsetValue;
 
             var matches = Regex.Matches((string)parameter,
                 @"\((?<false>[^\s,]+)\)|(?<true>[^,\s]+)");
@@ -24,28 +24,25 @@ namespace TommiUtility.Wpf
                 t => t.Groups["true"].Success ?
                     t.Groups["true"].Value : t.Groups["false"].Value);
 
+            if (targetType == null) return DependencyProperty.UnsetValue;
+
             if (targetType.IsEnum)
             {
-                if (value is bool == false)
-                    return DependencyProperty.UnsetValue;
+                if (value is bool == false) return DependencyProperty.UnsetValue;
 
                 var outputValues = enumValues[(bool)value];
 
-                if (outputValues.Any() == false)
-                    return DependencyProperty.UnsetValue;
+                if (outputValues.Any() == false) return DependencyProperty.UnsetValue;
 
                 var outputValue = outputValues.First();
                 return Enum.Parse(targetType, outputValue);
             }
-            else if (targetType == typeof(bool)
-                || targetType == typeof(bool?))
+            else if (targetType == typeof(bool) || targetType == typeof(bool?))
             {
-                if (value == null)
-                    return DependencyProperty.UnsetValue;
+                if (value == null) return DependencyProperty.UnsetValue;
 
                 var inputType = value.GetType();
-                if (inputType.IsEnum == false)
-                    return DependencyProperty.UnsetValue;
+                if (inputType.IsEnum == false) return DependencyProperty.UnsetValue;
 
                 var trueValues = enumValues[true];
                 var valueText = value.ToString();

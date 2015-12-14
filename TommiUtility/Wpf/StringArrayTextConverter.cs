@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -20,10 +21,7 @@ namespace TommiUtility.Wpf
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null)
-            {
-                return null;
-            }
+            if (value == null) return null;
 
             if (value is IEnumerable)
             {
@@ -40,14 +38,17 @@ namespace TommiUtility.Wpf
         }
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null)
-            {
-                return null;
-            }
+            if (value == null) return null;
 
             var text = value.ToString();
 
             return text.Split(Seperators.ToArray(), StringSplitOptions.None);
+        }
+
+        [ContractInvariantMethod]
+        private void ContractInvariant()
+        {
+            Contract.Invariant(Seperators != null);
         }
     }
 }

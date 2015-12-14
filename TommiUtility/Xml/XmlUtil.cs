@@ -7,6 +7,9 @@ using System.Xml;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Xml.Serialization;
 using System.IO;
+using System.Diagnostics.Contracts;
+using TommiUtility.Test;
+using iBoss2.Util;
 
 namespace TommiUtility.Xml
 {
@@ -36,6 +39,8 @@ namespace TommiUtility.Xml
         }
         public static T Deserialize<T>(string xml)
         {
+            Contract.Requires<ArgumentNullException>(xml != null);
+
             var serializer = new XmlSerializer(typeof(T));
 
             using (var reader = new StringReader(xml))
@@ -48,12 +53,16 @@ namespace TommiUtility.Xml
 
         public static void WriteFile<T>(T @object, string filePath)
         {
+            Contract.Requires<ArgumentNullException>(filePath != null);
+
             var xml = Serialize(@object);
 
             File.WriteAllText(filePath, xml);
         }
         public static T ReadFile<T>(string filePath)
         {
+            Contract.Requires<ArgumentNullException>(filePath != null);
+
             var xml = File.ReadAllText(filePath);
 
             return Deserialize<T>(xml);
@@ -61,6 +70,9 @@ namespace TommiUtility.Xml
 
         public static XmlElement AddElement(this XmlNode node, string name)
         {
+            Contract.Requires<ArgumentNullException>(node != null);
+            Contract.Requires<ArgumentNullException>(name != null);
+
             var element = node.OwnerDocument.CreateElement(name);
 
             node.AppendChild(element);
@@ -69,6 +81,10 @@ namespace TommiUtility.Xml
         }
         public static XmlElement AddElement(this XmlNode node, string name, string value)
         {
+            Contract.Requires<ArgumentNullException>(node != null);
+            Contract.Requires<ArgumentNullException>(name != null);
+            Contract.Requires<ArgumentNullException>(value != null);
+
             var element = node.OwnerDocument.CreateElement(name);
             element.InnerText = value;
 
@@ -79,6 +95,8 @@ namespace TommiUtility.Xml
 
         public static string GetIndentedXml(this XmlDocument xmlDocument)
         {
+            Contract.Requires<NullReferenceException>(xmlDocument != null);
+
             var stringBuilder = new StringBuilder();
             
             var writerSettings = new XmlWriterSettings
@@ -98,40 +116,33 @@ namespace TommiUtility.Xml
     [TestClass]
     public class XmlUtilTest
     {
-        public class TestClass
-        {
-            public string Text { get; set; }
-        }
-
         [TestMethod]
         public void TestSerialize()
         {
-            var tester = new TestClass[] {
-                new TestClass { Text = "123" },
-                new TestClass { Text = "234" }
-            };
+            var tester = new[] { Box.Create("123"), Box.Create("234") };
 
             var xml = XmlUtil.Serialize(tester);
 
-            var testee = XmlUtil.Deserialize<TestClass[]>(xml);
+            var testee = XmlUtil.Deserialize<Box<string>[]>(xml);
 
             Assert.AreEqual(tester.Length, testee.Length);
-            Assert.AreEqual(tester.First().Text, testee.First().Text);
-            Assert.AreEqual(tester.Last().Text, testee.Last().Text);
+            Assert.AreEqual(tester.First().Item, testee.First().Item);
+            Assert.AreEqual(tester.Last().Item, testee.Last().Item);
         }
 
         [TestMethod]
         public void TestFile()
         {
-            var tester = new TestClass { Text = "123" };
+            var tester = Box.Create("123", "234");
 
             XmlUtil.WriteFile(tester, "test.xml");
 
-            var testee = XmlUtil.ReadFile<TestClass>("test.xml");
+            var testee = XmlUtil.ReadFile<Box<string, string>>("test.xml");
 
             File.Delete("test.xml");
 
-            Assert.AreEqual(tester.Text, testee.Text);
+            Assert.AreEqual(tester.Item1, testee.Item1);
+            Assert.AreEqual(tester.Item2, testee.Item2);
         }
 
         [TestMethod]

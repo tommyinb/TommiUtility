@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -13,6 +14,9 @@ namespace TommiUtility.Wpf
     {
         public ListBoxQuickSearch(ListBox listBox, Func<object, string> wordSelector)
         {
+            Contract.Requires<ArgumentNullException>(listBox != null);
+            Contract.Requires<ArgumentNullException>(wordSelector != null);
+
             this.listBox = listBox;
             listBox.KeyDown += KeyDown;
 
@@ -36,10 +40,8 @@ namespace TommiUtility.Wpf
                 text.Clear();
             }
 
-            if (e.Key < Key.A)
-                return;
-            if (e.Key > Key.Z)
-                return;
+            if (e.Key < Key.A) return;
+            if (e.Key > Key.Z) return;
 
             text.Append(e.Key.ToString());
             lastTime = DateTime.Now;
@@ -48,11 +50,10 @@ namespace TommiUtility.Wpf
             var startItems = listBox.Items.Cast<object>().Where(t =>
                 wordSelector(t).StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
             var containItems = listBox.Items.Cast<object>().Where(t =>
-                wordSelector(t).ToUpper().Contains(searchText));
+                wordSelector(t).ToUpper().Contains(searchText.ToUpper()));
 
             var searchItem = startItems.Concat(containItems).FirstOrDefault();
-            if (searchItem == null)
-                return;
+            if (searchItem == null) return;
 
             listBox.SelectedItem = searchItem;
             listBox.ScrollIntoView(searchItem);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,28 +11,19 @@ namespace TommiUtility.Wpf
 {
     public class TemplateSelector : DataTemplateSelector
     {
-        public List<TemplateSelectType> SelectTypes { get; set; }
-
-        public TemplateSelector()
-        {
-            this.SelectTypes = new List<TemplateSelectType>();
-        }
+        public IEnumerable<TemplateSelectType> SelectTypes { get; set; }
 
         public override DataTemplate SelectTemplate(object item, DependencyObject container)
         {
-            if (SelectTypes == null)
-                throw new InvalidOperationException();
+            if (item == null) return null;
 
-            foreach (var selectType in SelectTypes)
-            {
-                if (selectType.Type.IsAssignableFrom(
-                    item.GetType()) == false)
-                    continue;
+            if (SelectTypes == null) return null;
 
-                return selectType.Template;
-            }
+            var selectType = SelectTypes.FirstOrDefault(t => t.Type.IsAssignableFrom(item.GetType()));
 
-            throw new InvalidOperationException();
+            if (selectType == null) return null;
+
+            return selectType.Template;
         }
     }
 

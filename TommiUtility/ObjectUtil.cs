@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TommiUtility.Test;
 
 namespace TommiUtility
 {
@@ -11,8 +13,8 @@ namespace TommiUtility
     {
         public static bool EqualsAny(this object @object, params object[] objects)
         {
-            if (objects.Length <= 0)
-                return false;
+            Contract.Requires<ArgumentNullException>(@object != null);
+            Contract.Requires<ArgumentNullException>(objects != null);
 
             return objects.Any(t => @object.Equals(t));
         }
@@ -24,6 +26,8 @@ namespace TommiUtility
         }
         public static object ChangeType(object value, Type type)
         {
+            Contract.Requires<ArgumentNullException>(type != null);
+
             try
             {
                 return Convert.ChangeType(value, type);
@@ -33,11 +37,16 @@ namespace TommiUtility
                 var isNullable = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
                 if (isNullable == false) throw;
 
-                if (value == null) return null;
-
-                var nonNullableType = type.GetGenericArguments().Single();
-                var nonNullableValue = Convert.ChangeType(value, nonNullableType);
-                return Activator.CreateInstance(type, nonNullableValue);
+                if (value != null)
+                {
+                    var nonNullableType = type.GetGenericArguments().Single();
+                    var nonNullableValue = Convert.ChangeType(value, nonNullableType);
+                    return Activator.CreateInstance(type, nonNullableValue);
+                }
+                else
+                {
+                    return null;
+                }
             }
         }
     }
@@ -57,6 +66,7 @@ namespace TommiUtility
             Assert.IsFalse(1.EqualsAny(2));
 
             Assert.IsFalse("X".EqualsAny());
+            Assert.IsFalse("X".EqualsAny(new object[0]));
         }
 
         [TestMethod]
