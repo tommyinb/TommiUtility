@@ -160,6 +160,25 @@ namespace TommiUtility.Collections
 
             return source.Aggregate((x, y) => x + y);
         }
+
+        public static IEnumerable<T> Flood<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> floodSelector)
+        {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Requires<ArgumentNullException>(floodSelector != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
+
+            var items = source;
+
+            while (items.Any())
+            {
+                foreach (var item in items)
+                {
+                    yield return item;
+                }
+
+                items = items.SelectMany(floodSelector);
+            }
+        }
     }
 
     [TestClass]
@@ -292,6 +311,28 @@ namespace TommiUtility.Collections
             var items = timeSpans.Select(t => new { time = t });
             var sum2 = items.Sum(t => t.time);
             Assert.AreEqual(expect, sum2);
+        }
+
+        [TestMethod]
+        public void TestFlood()
+        {
+            var source = new[]
+            {
+                "1234567",
+                "ABCD"
+            };
+
+            var divideHalf = new Func<string, string[]>(t => t.Length > 1 ?
+                new[] { t.Substring(0, t.Length / 2), t.Substring(t.Length / 2) } : new string[0]);
+            var flood = source.Flood(divideHalf);
+
+            AssertUtil.SequenceEqual(new[]
+            {
+                "1234567", "ABCD",
+                "123", "4567", "AB", "CD",
+                "1", "23", "45", "67", "A", "B", "C", "D",
+                "2", "3", "4", "5", "6", "7"
+            }, flood);
         }
     }
 }
