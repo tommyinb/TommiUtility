@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -20,8 +21,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     mouseMove += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -29,7 +34,11 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     mouseMove -= value;
-                    TryStopHook();
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
@@ -41,8 +50,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     mouseMoveExt += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -50,7 +63,11 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     mouseMoveExt -= value;
-                    TryStopHook();
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
@@ -62,8 +79,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     mouseClick += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -71,7 +92,11 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     mouseClick -= value;
-                    TryStopHook();
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
@@ -83,8 +108,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     mouseClickExt += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -92,7 +121,11 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     mouseClickExt -= value;
-                    TryStopHook();
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
@@ -104,8 +137,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     mouseDown += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -113,7 +150,11 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     mouseDown -= value;
-                    TryStopHook();
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
@@ -125,8 +166,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     mouseUp += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -134,7 +179,11 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     mouseUp -= value;
-                    TryStopHook();
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
@@ -146,8 +195,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     mouseWheel += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -155,7 +208,11 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     mouseWheel -= value;
-                    TryStopHook();
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
@@ -167,8 +224,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     mouseDoubleClick += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -176,20 +237,29 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     mouseDoubleClick -= value;
-                    TryStopHook();
+
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
 
-        private static MouseHook mouseHook = null;
+        private static bool HasHookEvents()
+        {
+            return mouseMove != null || mouseMoveExt != null
+                || mouseClick != null || mouseClickExt != null
+                || mouseDown != null || mouseUp != null
+                || mouseWheel != null || mouseDoubleClick != null;
+        }
+        private static volatile MouseHook mouseHook = null;
         private static void TryStartHook()
         {
             lock (locker)
             {
-                if (mouseHook != null)
-                {
-                    return;
-                }
+                if (mouseHook != null) return;
 
                 mouseHook = new MouseHook();
             }
@@ -198,23 +268,10 @@ namespace TommiUtility.Windows
         {
             lock (locker)
             {
-                if (mouseHook == null)
-                {
-                    return;
-                }
+                if (mouseHook == null) return;
 
-                if (mouseClick == null
-                    && mouseDown == null
-                    && mouseMove == null
-                    && mouseUp == null
-                    && mouseClickExt == null
-                    && mouseMoveExt == null
-                    && mouseWheel == null)
-                {
-                    mouseHook.Dispose();
-
-                    mouseHook = null;
-                }
+                mouseHook.Dispose();
+                mouseHook = null;
             }
         }
 
@@ -245,8 +302,14 @@ namespace TommiUtility.Windows
         {
             Dispose(false);
         }
+        
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(applicationContext != null);
+        }
 
-        private ApplicationContext applicationContext = new ApplicationContext();
+        private readonly ApplicationContext applicationContext = new ApplicationContext();
         private void RunApplication()
         {
             var moduleHandler = NativeMethods.MouseHookGetModuleHandle(typeof(MouseHook).Module.FullyQualifiedName);
@@ -274,6 +337,7 @@ namespace TommiUtility.Windows
 
         private IntPtr hookHandle;
         private int prevX, prevY;
+        [ContractVerification(false)]
         private IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam)
         {
             if (nCode >= 0)
@@ -384,9 +448,14 @@ namespace TommiUtility.Windows
                 delegates = @event.GetInvocationList();
             }
 
+            Contract.Assume(delegates != null);
+
             foreach (var @delegate in delegates)
             {
-                @delegate.DynamicInvoke(args);
+                if (@delegate != null)
+                {
+                    @delegate.DynamicInvoke(args);
+                }
             }
         }
     }
@@ -453,7 +522,10 @@ namespace TommiUtility.Windows
             : base(buttons, clicks, x, y, delta) { }
 
         internal MouseHookEventArgs(MouseEventArgs e)
-            : base(e.Button, e.Clicks, e.X, e.Y, e.Delta) { }
+            : base(e.Button, e.Clicks, e.X, e.Y, e.Delta)
+        {
+            Contract.Requires<ArgumentNullException>(e != null);
+        }
 
         public bool Handled { get; set; }
     }

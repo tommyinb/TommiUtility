@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -21,11 +22,16 @@ namespace TommiUtility.Windows
 
         public static bool SetForegroundWindow(IntPtr windowHandle)
         {
+            Contract.Requires<ArgumentException>(windowHandle != IntPtr.Zero);
+
             return NativeMethods.SetForegroundWindow(windowHandle);
         }
 
         public static string GetText(IntPtr windowHandle)
         {
+            Contract.Requires<ArgumentException>(windowHandle != IntPtr.Zero);
+            Contract.Ensures(Contract.Result<string>() != null);
+
             int bufferSize = 256;
 
             while (true)
@@ -50,6 +56,8 @@ namespace TommiUtility.Windows
         
         public static bool SetRectangle(IntPtr windowHandle, Rectangle rectangle)
         {
+            Contract.Requires<ArgumentException>(windowHandle != IntPtr.Zero);
+
             return NativeMethods.SetWindowPos(
                 windowHandle, IntPtr.Zero,
                 rectangle.X, rectangle.Y,

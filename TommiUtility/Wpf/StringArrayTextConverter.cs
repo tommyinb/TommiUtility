@@ -21,19 +21,21 @@ namespace TommiUtility.Wpf
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null) return null;
-
             if (value is IEnumerable)
             {
                 var items = (IEnumerable)value;
 
-                var seperator = Seperators.First();
+                var seperator = Seperators.FirstOrDefault() ?? string.Empty;
 
                 return string.Join(seperator, items.Cast<object>().ToArray());
             }
-            else
+            else if (value != null)
             {
                 return value.ToString();
+            }
+            else
+            {
+                return null;
             }
         }
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -43,12 +45,6 @@ namespace TommiUtility.Wpf
             var text = value.ToString();
 
             return text.Split(Seperators.ToArray(), StringSplitOptions.None);
-        }
-
-        [ContractInvariantMethod]
-        private void ContractInvariant()
-        {
-            Contract.Invariant(Seperators != null);
         }
     }
 }

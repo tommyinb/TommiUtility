@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -18,6 +19,10 @@ namespace TommiUtility.Windows
 
         public static void MoveFileToBin(params string[] filePaths)
         {
+            Contract.Requires<ArgumentNullException>(filePaths != null);
+
+            if (filePaths.Length <= 0) return;
+
             var shf = new SHFILEOPSTRUCT();
             shf.wFunc = FO_DELETE;
             shf.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_NOERRORUI;

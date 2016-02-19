@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 
@@ -9,22 +10,32 @@ namespace iBoss2.Util
     {
         public static Box<T> Create<T>(T item)
         {
+            Contract.Ensures(Contract.Result<Box<T>>() != null);
+
             return new Box<T> { Item = item };
         }
         public static Box<T1, T2> Create<T1, T2>(T1 item1, T2 item2)
         {
+            Contract.Ensures(Contract.Result<Box<T1, T2>>() != null);
+
             return new Box<T1, T2> { Item1 = item1, Item2 = item2 };
         }
         public static Box<T1, T2, T3> Create<T1, T2, T3>(T1 item1, T2 item2, T3 item3)
         {
+            Contract.Ensures(Contract.Result<Box<T1, T2, T3>>() != null);
+
             return new Box<T1, T2, T3> { Item1 = item1, Item2 = item2, Item3 = item3 };
         }
         public static Box<T1, T2, T3, T4> Create<T1, T2, T3, T4>(T1 item1, T2 item2, T3 item3, T4 item4)
         {
+            Contract.Ensures(Contract.Result<Box<T1, T2, T3, T4>>() != null);
+
             return new Box<T1, T2, T3, T4> { Item1 = item1, Item2 = item2, Item3 = item3, Item4 = item4 };
         }
         public static Box<T1, T2, T3, T4, T5> Create<T1, T2, T3, T4, T5>(T1 item1, T2 item2, T3 item3, T4 item4, T5 item5)
         {
+            Contract.Ensures(Contract.Result<Box<T1, T2, T3, T4, T5>>() != null);
+
             return new Box<T1, T2, T3, T4, T5> { Item1 = item1, Item2 = item2, Item3 = item3, Item4 = item4, Item5 = item5 };
         }
     }

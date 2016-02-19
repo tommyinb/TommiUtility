@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,18 +10,29 @@ namespace TommiUtility.FileSystem
 {
     public class LogWriter : TextWriter
     {
-        public TextWriter TextWriter { get; private set; }
+        public readonly TextWriter TextWriter;
         public LogWriter(TextWriter textWriter, string logPath)
         {
-            TextWriter = textWriter;
+            Contract.Requires<ArgumentNullException>(textWriter != null);
+            Contract.Requires<ArgumentNullException>(logPath != null);
+            Contract.Requires<ArgumentException>(logPath.Length > 0);
 
+            TextWriter = textWriter;
             LogPath = logPath;
         }
 
-        public string LogPath { get; private set; }
+        public readonly string LogPath;
         public override Encoding Encoding { get { return Encoding.UTF8; } }
+        private readonly StringBuilder cache = new StringBuilder();
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(TextWriter != null);
+            Contract.Invariant(LogPath != null);
+            Contract.Invariant(LogPath.Length > 0);
+            Contract.Invariant(cache != null);
+        }
 
-        private StringBuilder cache = new StringBuilder();
         public override void Write(char value)
         {
             TextWriter.Write(value);

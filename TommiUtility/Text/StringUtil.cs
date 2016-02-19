@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -12,25 +13,44 @@ namespace TommiUtility.Text
     {
         public static bool ContainsAny(this string text, params string[] texts)
         {
+            Contract.Requires<ArgumentNullException>(text != null);
+            Contract.Requires<ArgumentNullException>(texts != null);
+
             return texts.Any(text.Contains);
         }
 
         public static string FirstLetterToUpper(this string text)
         {
-            return text.Length >= 1 ? text.Substring(0, 1).ToUpper() + text.Substring(1) : text;
+            Contract.Requires<ArgumentNullException>(text != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
+            if (text.Length <= 0) return string.Empty;
+
+            return text.Substring(0, 1).ToUpper() + text.Substring(1);
         }
         public static string FirstLetterToLower(this string text)
         {
-            return text.Length >= 1 ? text.Substring(0, 1).ToLower() + text.Substring(1) : text;
+            Contract.Requires<ArgumentNullException>(text != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
+            if (text.Length <= 0) return string.Empty;
+
+            return text.Substring(0, 1).ToLower() + text.Substring(1);
         }
 
         public static IEnumerable<string> GetCamelWords(string text)
         {
+            Contract.Requires<ArgumentNullException>(text != null);
+            Contract.Ensures(Contract.Result<IEnumerable<string>>() != null);
+
             return Regex.Matches(text, @"[A-Z][^A-Z]*|^[^A-Z]*")
                 .Cast<Match>().Select(t => t.Value);
         }
         public static string GetEnglishText(object @object)
         {
+            Contract.Requires<ArgumentNullException>(@object != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
             var text = @object.ToString();
 
             var words = GetCamelWords(text);
@@ -40,11 +60,11 @@ namespace TommiUtility.Text
 
         public static string AndJoin(params string[] items)
         {
-            if (items.Length <= 0)
-                return string.Empty;
+            Contract.Requires<ArgumentNullException>(items != null);
+            Contract.Ensures(Contract.Result<string>() != null);
 
-            if (items.Length <= 1)
-                return items.First();
+            if (items.Any() == false) return string.Empty;
+            if (items.Length == 1) return items.First() ?? string.Empty;
 
             var output = new StringBuilder();
 
@@ -63,50 +83,50 @@ namespace TommiUtility.Text
         }
         public static string AndJoin(IEnumerable<string> items)
         {
+            Contract.Requires<ArgumentNullException>(items != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
             return AndJoin(items.ToArray());
         }
 
         public static string Clip(this string text, int length, string moreSymbol = "...")
         {
-            if (text.Length <= length)
-                return text;
+            Contract.Requires<ArgumentNullException>(text != null);
+            Contract.Requires<ArgumentException>(length >= 0);
+            Contract.Requires<ArgumentNullException>(moreSymbol != null);
+            Contract.Ensures(Contract.Result<string>() != null);
 
-            if (length < moreSymbol.Length)
-                return moreSymbol.Substring(0, length);
+            if (text.Length <= length) return text;
+
+            if (length < moreSymbol.Length) return moreSymbol.Substring(0, length);
 
             var trimLength = length - moreSymbol.Length;
 
-            return text.Substring(0, trimLength)
-                + moreSymbol;
+            return text.Substring(0, trimLength) + moreSymbol;
         }
 
         public static string Trim(this string text, params string[] trimTexts)
         {
+            Contract.Requires<ArgumentNullException>(text != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
             var trimStart = TrimStart(text, trimTexts);
-
             var trimBoth = TrimEnd(trimStart, trimTexts);
-
             return trimBoth;
         }
         public static string TrimStart(this string text, params string[] trimTexts)
         {
-            if (text == null)
-                throw new ArgumentNullException();
+            Contract.Requires<ArgumentNullException>(text != null);
+            Contract.Ensures(Contract.Result<string>() != null);
 
-            if (trimTexts == null)
-                return text.TrimStart(null);
-
-            if (trimTexts.Length <= 0)
-                return text.TrimStart(new char[0]);
+            if (trimTexts == null) return text.TrimStart(null);
 
             while (true)
             {
-                var trimText = trimTexts.FirstOrDefault(t =>
-                    text.StartsWith(t));
+                var trimText = trimTexts.FirstOrDefault(t => text.StartsWith(t));
+                if (trimText == null) break;
 
-                if (trimText == null)
-                    break;
-
+                Contract.Assume(trimText.Length <= text.Length);
                 text = text.Substring(trimText.Length);
             }
 
@@ -114,25 +134,18 @@ namespace TommiUtility.Text
         }
         public static string TrimEnd(this string text, params string[] trimTexts)
         {
-            if (text == null)
-                throw new ArgumentNullException();
+            Contract.Requires<ArgumentNullException>(text != null);
+            Contract.Ensures(Contract.Result<string>() != null);
 
-            if (trimTexts == null)
-                return text.TrimEnd(null);
-
-            if (trimTexts.Length <= 0)
-                return text.TrimEnd(new char[0]);
+            if (trimTexts == null) return text.TrimEnd(null);
 
             while (true)
             {
-                var trimText = trimTexts.FirstOrDefault(t =>
-                    text.EndsWith(t));
+                var trimText = trimTexts.FirstOrDefault(t => text.EndsWith(t));
+                if (trimText == null) break;
 
-                if (trimText == null)
-                    break;
-
-                text = text.Substring(0, text.Length
-                    - trimText.Length);
+                Contract.Assume(trimText.Length <= text.Length);
+                text = text.Substring(0, text.Length - trimText.Length);
             }
 
             return text;

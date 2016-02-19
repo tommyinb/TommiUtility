@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -25,6 +26,10 @@ namespace TommiUtility.Web
 
         public static HttpWebRequest Create(string requestUriString)
         {
+            Contract.Requires<ArgumentNullException>(requestUriString != null);
+            Contract.Requires<ArgumentException>(requestUriString.Length > 0);
+            Contract.Ensures(Contract.Result<HttpWebRequest>() != null);
+
             if (isServicePointAdjusted == false)
             {
                 AdjustServicePoint();
@@ -32,6 +37,7 @@ namespace TommiUtility.Web
             }
 
             var request = HttpWebRequest.CreateHttp(requestUriString);
+            Contract.Assume(request != null);
 
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36";

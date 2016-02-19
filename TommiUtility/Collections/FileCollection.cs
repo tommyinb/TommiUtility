@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using System.Diagnostics.Contracts;
+using TommiUtility.Test;
 
 namespace TommiUtility.Collections
 {
@@ -15,12 +17,22 @@ namespace TommiUtility.Collections
     {
         public FileCollection(string filePath)
         {
+            Contract.Requires<ArgumentNullException>(filePath != null);
+            Contract.Requires<ArgumentException>(filePath.Length > 0);
+
             this.FilePath = filePath;
 
             this.ReadFile();
         }
 
-        public string FilePath { get; private set; }
+        public readonly string FilePath;
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(FilePath != null);
+            Contract.Invariant(FilePath.Length > 0);
+        }
+
         public void ReadFile()
         {
             if (File.Exists(FilePath) == false) return;
@@ -33,9 +45,12 @@ namespace TommiUtility.Collections
                 items = (T[])xmlSerializer.Deserialize(fileStream);
             }
 
-            foreach (var item in items)
+            if (items != null)
             {
-                this.Add(item);
+                foreach (var item in items)
+                {
+                    this.Add(item);
+                }
             }
         }
         public void WriteFile()
@@ -80,11 +95,7 @@ namespace TommiUtility.Collections
 
             var fileCollectionB = new FileCollection<string>(filePath);
 
-            Assert.AreEqual(fileCollectionA.Count, fileCollectionB.Count);
-            for (int i = 0; i < fileCollectionA.Count; i++)
-            {
-                Assert.AreEqual(fileCollectionA[i], fileCollectionB[i]);
-            }
+            AssertUtil.SequenceEqual(fileCollectionA, fileCollectionB);
 
             File.Delete(filePath);
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -13,8 +14,13 @@ namespace TommiUtility.Web
     {
         public SimpleServer(int port, Action<HttpListenerContext> action)
         {
+            Contract.Requires<ArgumentException>(port > 0);
+            Contract.Requires<ArgumentException>(port <= 65535);
+            Contract.Requires<ArgumentNullException>(action != null);
+
             this.action = action;
 
+            Contract.Assume(listener.Prefixes != null);
             listener.Prefixes.Add("http://*:" + port + "/");
             listener.Start();
 
@@ -27,8 +33,15 @@ namespace TommiUtility.Web
             listener.Close();
         }
 
-        private Action<HttpListenerContext> action;
-        private HttpListener listener = new HttpListener();
+        private readonly Action<HttpListenerContext> action;
+        private readonly HttpListener listener = new HttpListener();
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(action != null);
+            Contract.Invariant(listener != null);
+        }
+
         private void Run()
         {
             while (true)
@@ -37,6 +50,7 @@ namespace TommiUtility.Web
                 try
                 {
                     context = listener.GetContext();
+                    Contract.Assume(context != null);
                 }
                 catch (ObjectDisposedException)
                 {
@@ -63,6 +77,7 @@ namespace TommiUtility.Web
 
                 try
                 {
+                    Contract.Assume(context.Response != null);
                     context.Response.Close();
                 }
                 catch (Exception e)
@@ -71,7 +86,6 @@ namespace TommiUtility.Web
                 }
             }
         }
-
         public event ThreadExceptionEventHandler Error;
         private void OnError(Exception exception)
         {

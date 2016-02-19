@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -18,23 +19,40 @@ namespace TommiUtility.Runtime
     {
         public static string GetName<T>(Expression<Func<T>> expression)
         {
-            if (expression.Body is MemberExpression == false)
-                throw new ArgumentException();
+            Contract.Requires<ArgumentNullException>(expression != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
+            if (expression.Body is MemberExpression == false) throw new InvalidCastException();
 
             var memberExpression = (MemberExpression)expression.Body;
             var memberInfo = memberExpression.Member;
-
             return memberInfo.Name;
         }
 
         public static string GetName(this Type type, CodeTypeStyle style = CodeTypeStyle.SimpleName)
         {
+            Contract.Requires<ArgumentNullException>(type != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
             var codeDomProvider = CodeDomProvider.CreateProvider("C#");
-            var typeReferenceExpression = new CodeTypeReferenceExpression(new CodeTypeReference(type));
+            
+            if (codeDomProvider == null)
+            {
+                switch (style)
+                {
+                    case CodeTypeStyle.SimpleName: return type.Name;
+                    case CodeTypeStyle.FullName: return type.FullName;
+                    default: throw new InvalidEnumArgumentException();
+                }
+            }
+
+            var typeReference = new CodeTypeReference(type);
+            var typeReferenceExpression = new CodeTypeReferenceExpression(typeReference);
 
             using (var writer = new StringWriter())
             {
-                codeDomProvider.GenerateCodeFromExpression(typeReferenceExpression, writer, new CodeGeneratorOptions());
+                var generatorOptions = new CodeGeneratorOptions();
+                codeDomProvider.GenerateCodeFromExpression(typeReferenceExpression, writer, generatorOptions);
                 var fullName = writer.ToString();
 
                 switch (style)
@@ -52,10 +70,13 @@ namespace TommiUtility.Runtime
 
         public static T GetValue<T>(this Type type, Expression<Func<T>> expression)
         {
+            Contract.Requires<ArgumentNullException>(type != null);
+            Contract.Requires<ArgumentNullException>(expression != null);
+
             var name = GetName(expression);
 
             var searchType = type;
-            do
+            while (searchType != null && searchType != typeof(object))
             {
                 var propertyInfo = searchType.GetProperty(name,
                     BindingFlags.Public | BindingFlags.Public
@@ -68,9 +89,11 @@ namespace TommiUtility.Runtime
                 }
 
                 var value = propertyInfo.GetValue(null);
-                return (T)value;
 
-            } while (searchType != typeof(object));
+                if (value == null) return default(T);
+
+                return (T)value;
+            }
 
             throw new ArgumentException();
         }
@@ -89,11 +112,9 @@ namespace TommiUtility.Runtime
         {
             var abc = new { Name = "abc" };
 
-            Assert.AreEqual("Name",
-                CodeUtil.GetName(() => abc.Name));
+            Assert.AreEqual("Name", CodeUtil.GetName(() => abc.Name));
 
-            Assert.AreEqual("abc",
-                CodeUtil.GetName(() => abc));
+            Assert.AreEqual("abc", CodeUtil.GetName(() => abc));
         }
 
         [TestMethod]
@@ -129,11 +150,25 @@ namespace TommiUtility.Runtime
         }
         public class TestGetValueA
         {
-            public static string Property { get { return "A"; } }
+            public static string Property
+            {
+                get
+                {
+                    Contract.Ensures(Contract.Result<string>() != null);
+                    return "A";
+                }
+            }
         }
         public class TestGetValueB : TestGetValueA
         {
-            public new static string Property { get { return "B"; } }
+            public new static string Property
+            {
+                get
+                {
+                    Contract.Ensures(Contract.Result<string>() != null);
+                    return "B";
+                }
+            }
         }
         public class TestGetValueC : TestGetValueA { }
     }

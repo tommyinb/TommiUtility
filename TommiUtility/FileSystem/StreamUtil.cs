@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,8 +11,11 @@ namespace TommiUtility.FileSystem
 {
     public static class StreamUtil
     {
-        public static byte[] ReadToEnd(this Stream stream)
+        public static byte[] ReadAllBytes(this Stream stream)
         {
+            Contract.Requires<ArgumentNullException>(stream != null);
+            Contract.Ensures(Contract.Result<byte[]>() != null);
+
             var buffer = new byte[1024 * 1024];
 
             using (var memoryStream = new MemoryStream())
@@ -28,13 +32,25 @@ namespace TommiUtility.FileSystem
                 return memoryStream.ToArray();
             }
         }
+
+        public static string ReadAllText(this Stream stream, Encoding encoding)
+        {
+            Contract.Requires<ArgumentNullException>(stream != null);
+            Contract.Requires<ArgumentNullException>(encoding != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
+            using (var reader = new StreamReader(stream, encoding))
+            {
+                return reader.ReadToEnd();
+            }
+        }
     }
 
     [TestClass]
     public class StreamUtilTest
     {
         [TestMethod]
-        public void Test()
+        public void TestReadAllBytes()
         {
             var fromBytes = Enumerable.Repeat<byte>(1, 1024 * 1024)
                 .Concat(Enumerable.Repeat<byte>(2, 1024 * 1024))
@@ -42,9 +58,21 @@ namespace TommiUtility.FileSystem
 
             var stream = new MemoryStream(fromBytes);
             
-            var toBytes = stream.ReadToEnd();
+            var toBytes = stream.ReadAllBytes();
 
             Assert.IsTrue(fromBytes.SequenceEqual(toBytes));
+        }
+
+        [TestMethod]
+        public void TestReadAllText()
+        {
+            var inputText = "Testing1234";
+            var bytes = Encoding.UTF8.GetBytes(inputText);
+
+            var stream = new MemoryStream(bytes);
+            var outputText = stream.ReadAllText(Encoding.UTF8);
+
+            Assert.AreEqual(inputText, outputText);
         }
     }
 }

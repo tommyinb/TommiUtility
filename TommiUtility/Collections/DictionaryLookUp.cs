@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,20 +14,37 @@ namespace TommiUtility.Collections
         public DictionaryLookup() { }
         public DictionaryLookup(ILookup<TKey, TElement> lookup)
         {
+            Contract.Requires<ArgumentNullException>(lookup != null);
+
             foreach (var pair in lookup)
             {
-                var elements = new List<TElement>(pair);
-                dictionary.Add(pair.Key, elements);
+                if (pair != null)
+                {
+                    var key = pair.Key;
+                    if (key == null) throw new ArgumentException();
+
+                    var elements = new List<TElement>(pair);
+                    dictionary.Add(key, elements);
+                }
             }
         }
 
-        private Dictionary<TKey, List<TElement>> dictionary = new Dictionary<TKey, List<TElement>>();
+        private readonly Dictionary<TKey, List<TElement>> dictionary = new Dictionary<TKey, List<TElement>>();
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(dictionary != null);
+        }
 
         public void Add(TKey key, TElement element)
         {
+            Contract.Requires<ArgumentNullException>(key != null);
+
             if (dictionary.ContainsKey(key))
             {
                 var elements = dictionary[key];
+                Contract.Assume(elements != null);
+
                 elements.Add(element);
             }
             else
@@ -39,9 +57,14 @@ namespace TommiUtility.Collections
         }
         public void Add(TKey key, IEnumerable<TElement> elements)
         {
+            Contract.Requires<ArgumentNullException>(key != null);
+            Contract.Requires<ArgumentNullException>(elements != null);
+
             if (dictionary.ContainsKey(key))
             {
                 var list = dictionary[key];
+                Contract.Assume(list != null);
+
                 list.AddRange(elements);
             }
             else
@@ -53,9 +76,12 @@ namespace TommiUtility.Collections
 
         public bool Remove(TKey key, TElement element)
         {
+            Contract.Requires<ArgumentNullException>(key != null);
+
             if (dictionary.ContainsKey(key) == false) return false;
 
             var elements = dictionary[key];
+            Contract.Assume(elements != null);
 
             if (elements.Remove(element) == false) return false;
 
@@ -68,23 +94,44 @@ namespace TommiUtility.Collections
         }
         public bool Remove(TKey key)
         {
+            Contract.Requires<ArgumentNullException>(key != null);
+
             return dictionary.Remove(key);
         }
 
         public bool Contains(TKey key)
         {
-            return dictionary.ContainsKey(key) && dictionary[key].Any();
+            if (key == null) throw new ArgumentNullException();
+
+            return dictionary.ContainsKey(key);
         }
         public bool Contains(TKey key, TElement element)
         {
-            return dictionary.ContainsKey(key) && dictionary[key].Contains(element);
+            Contract.Requires<ArgumentNullException>(key != null);
+
+            if (dictionary.ContainsKey(key))
+            {
+                var elements = dictionary[key];
+                Contract.Assume(elements != null);
+
+                return elements.Contains(element);
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public IEnumerable<TElement> this[TKey key]
         {
             get
             {
-                return dictionary[key];
+                if (key == null) throw new ArgumentNullException();
+
+                var elements = dictionary[key];
+                Contract.Assume(elements != null);
+
+                return elements;
             }
         }
         public int Count
@@ -110,11 +157,14 @@ namespace TommiUtility.Collections
     {
         public DictionaryLookupGrouping(TKey key, List<TElement> elements)
         {
+            Contract.Requires<ArgumentNullException>(key != null);
+            Contract.Requires<ArgumentNullException>(elements != null);
+
             Key = key;
             Elements = elements;
         }
         public TKey Key { get; private set; }
-        public List<TElement> Elements { get; private set; }
+        public readonly List<TElement> Elements;
 
         public IEnumerator<TElement> GetEnumerator()
         {

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TommiUtility.Test;
 
 namespace TommiUtility.Collections
 {
@@ -11,6 +13,10 @@ namespace TommiUtility.Collections
     {
         public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Requires<ArgumentNullException>(predicate != null);
+            Contract.Ensures(Contract.Result<int>() >= -1);
+
             var index = 0;
 
             foreach (var item in source)
@@ -28,64 +34,102 @@ namespace TommiUtility.Collections
 
         public static bool None<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Requires<ArgumentNullException>(predicate != null);
+
             return source.Any(predicate) == false;
         }
 
         public static T FirstOrDefault<T>(this IEnumerable<T> source, T @default)
         {
+            Contract.Requires<ArgumentNullException>(source != null);
+
             var result = source.Take(1).ToArray();
 
-            return result.Length > 0 ? result.First() : @default;
+            if (result.Length < 1) return @default;
+
+            return result[0];
         }
         public static T FirstOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate, T @default)
         {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Requires<ArgumentNullException>(predicate != null);
+
             var result = source.Where(predicate).Take(1).ToArray();
 
-            return result.Length > 0 ? result.First() : @default;
+            if (result.Length < 1) return @default;
+
+            return result[0];
         }
         public static T LastOrDefault<T>(this IEnumerable<T> source, T @default)
         {
+            Contract.Requires<ArgumentNullException>(source != null);
+
             var result = source.Reverse().Take(1).ToArray();
 
-            return result.Length > 0 ? result.First() : @default;
+            if (result.Length < 1) return @default;
+
+            return result[0];
         }
         public static T LastOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate, T @default)
         {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Requires<ArgumentNullException>(predicate != null);
+
             var result = source.Reverse().Where(predicate).Take(1).ToArray();
 
-            return result.Length > 0 ? result.First() : @default;
+            if (result.Length < 1) return @default;
+
+            return result[0];
         }
 
         public static IEnumerable<T> Difference<T>(IEnumerable<T> first, IEnumerable<T> second)
         {
+            Contract.Requires<ArgumentNullException>(first != null);
+            Contract.Requires<ArgumentNullException>(second != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
+
             return first.Except(second).Concat(second.Except(first));
         }
 
         public static IEnumerable<T1> Except<T1, T2>(this IEnumerable<T1> first,
             IEnumerable<T2> second, Func<T1, T2, bool> comparison)
         {
+            Contract.Requires<ArgumentNullException>(first != null);
+            Contract.Requires<ArgumentNullException>(second != null);
+            Contract.Requires<ArgumentNullException>(comparison != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T1>>() != null);
+
             return first.Where(t => second
                 .Any(s => comparison.Invoke(t, s)) == false);
         }
 
         public static IEnumerable<T> Concat<T>(params IEnumerable<T>[] sources)
         {
-            IEnumerable<T> output = new T[0];
+            Contract.Requires<ArgumentNullException>(sources != null);
+            Contract.Requires<ArgumentException>(Contract.ForAll(0, sources.Length, i => sources[i] != null));
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
 
-            foreach (var source in sources)
-            {
-                output = output.Concat(source);
-            }
-
-            return output;
+            var result = sources.Aggregate((IEnumerable<T>)new T[0],
+                (total, curr) => total.Concat(curr));
+            
+            Contract.Assume(result != null);
+            return result;
         }
 
         public static IEnumerable<T> Join<T>(this IEnumerable<T> source, T seperator)
         {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
+
             return Join(source, () => seperator);
         }
         public static IEnumerable<T> Join<T>(this IEnumerable<T> source, Func<T> seperator)
         {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Requires<ArgumentNullException>(seperator != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
+
             var isFollowing = false;
 
             foreach (var item in source)
@@ -105,10 +149,15 @@ namespace TommiUtility.Collections
 
         public static TimeSpan Sum<T>(this IEnumerable<T> source, Func<T, TimeSpan> selector)
         {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Requires<ArgumentNullException>(selector != null);
+
             return source.Select(selector).Sum();
         }
         public static TimeSpan Sum(this IEnumerable<TimeSpan> source)
         {
+            Contract.Requires<ArgumentNullException>(source != null);
+
             return source.Aggregate((x, y) => x + y);
         }
     }

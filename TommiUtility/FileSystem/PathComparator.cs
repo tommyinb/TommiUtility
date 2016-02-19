@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,9 +14,37 @@ namespace TommiUtility.FileSystem
     {
         public int Compare(string x, string y)
         {
+            if (x != null)
+            {
+                if (y != null)
+                {
+                    return ComparePath(x, y);
+                }
+                else
+                {
+                    return 1;
+                }
+            }
+            else
+            {
+                if (y != null)
+                {
+                    return -1;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+        }
+        private int ComparePath(string xPath, string yPath)
+        {
+            Contract.Requires<ArgumentNullException>(xPath != null);
+            Contract.Requires<ArgumentNullException>(yPath != null);
+
             var directorySeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
-            var xBlocks = x.Split(directorySeparators);
-            var yBlocks = y.Split(directorySeparators);
+            var xBlocks = xPath.Split(directorySeparators);
+            var yBlocks = yPath.Split(directorySeparators);
 
             var commonBlockCount = Math.Min(xBlocks.Length, yBlocks.Length);
             for (int i = 0; i < commonBlockCount; i++)
@@ -32,9 +61,11 @@ namespace TommiUtility.FileSystem
 
             return xBlocks.Length - yBlocks.Length;
         }
-
         private int CompareBlock(string xBlock, string yBlock)
         {
+            Contract.Requires<ArgumentNullException>(xBlock != null);
+            Contract.Requires<ArgumentNullException>(yBlock != null);
+
             var xParts = Regex.Matches(xBlock, @"\d+(.\d+)?|[^\d]+");
             var yParts = Regex.Matches(yBlock, @"\d+(.\d+)?|[^\d]+");
 
@@ -53,9 +84,11 @@ namespace TommiUtility.FileSystem
 
             return xParts.Count - yParts.Count;
         }
-
         private int ComparePart(string xPart, string yPart)
         {
+            Contract.Requires<ArgumentNullException>(xPart != null);
+            Contract.Requires<ArgumentNullException>(yPart != null);
+
             decimal xPartValue, yPartValue;
             if (decimal.TryParse(xPart, out xPartValue)
                 && decimal.TryParse(yPart, out yPartValue))
@@ -64,7 +97,7 @@ namespace TommiUtility.FileSystem
             }
             else
             {
-                return xPart.CompareTo(yPart);
+                return string.Compare(xPart, yPart);
             }
         }
     }

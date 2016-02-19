@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,12 +12,14 @@ namespace TommiUtility.Mathematics
     {
         public static bool Contains<T>(T value, T bound1, T bound2) where T : IComparable<T>
         {
-            return new Range<T>(bound1, bound2)
-                .Contains(value);
+            var range = new Range<T>(bound1, bound2);
+            return range.Contains(value);
         }
 
         public static Range<T> Get<T>(T bound1, T bound2) where T : IComparable<T>
         {
+            Contract.Ensures(Contract.Result<Range<T>>() != null);
+
             return new Range<T>(bound1, bound2);
         }
     }

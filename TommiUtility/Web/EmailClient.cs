@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
@@ -14,29 +15,47 @@ namespace TommiUtility.Web
     {
         public EmailClient(string host, int port, bool ssl, string email, string password)
         {
-            this.client = new SmtpClient(host, port);
+            Contract.Requires<ArgumentNullException>(host != null);
+            Contract.Requires<ArgumentException>(host.Length > 0);
+            Contract.Requires<ArgumentException>(port > 0);
+            Contract.Requires<ArgumentException>(port <= 65535);
+            Contract.Requires<ArgumentNullException>(email != null);
+            Contract.Requires<ArgumentException>(email.Length > 0);
 
-            this.client.EnableSsl = ssl;
+            client = new SmtpClient(host, port);
+            client.EnableSsl = ssl;
 
-            this.clientEmail = email;
-
-            this.client.Credentials = new NetworkCredential(
-                email, password);
+            client.UseDefaultCredentials = false;
+            client.Credentials = new NetworkCredential(email, password);
+            
+            clientEmail = email;
         }
         public void Dispose()
         {
-            this.client.Dispose();
+            client.Dispose();
         }
 
-        private SmtpClient client;
-        private string clientEmail;
-
-        public void Send(string email, string subject, string content)
+        private readonly SmtpClient client;
+        private readonly string clientEmail;
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
         {
+            Contract.Invariant(client != null);
+
+            Contract.Invariant(clientEmail != null);
+            Contract.Invariant(clientEmail.Length > 0);
+        }
+
+        public void Send(string address, string subject, string content)
+        {
+            Contract.Requires<ArgumentException>(string.IsNullOrEmpty(address) == false);
+            Contract.Requires<ArgumentNullException>(subject != null);
+            Contract.Requires<ArgumentNullException>(content != null);
+
             var message = new MailMessage();
 
             message.From = new MailAddress(clientEmail);
-            message.To.Add(email);
+            message.To.Add(address);
 
             message.Subject = subject;
 

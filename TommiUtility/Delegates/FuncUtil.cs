@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TommiUtility.Test;
 
 namespace TommiUtility.Delegates
 {
@@ -11,113 +13,71 @@ namespace TommiUtility.Delegates
     {
         public static T Repeat<T>(this Func<T, T> func, T input, int times)
         {
-            var result = input;
+            Contract.Requires<ArgumentNullException>(func != null);
+            Contract.Requires<ArgumentException>(times >= 0);
 
-            for (int i = 0; i < times; i++)
-            {
-                result = func.Invoke(result);
-            }
-
-            return result;
+            return Enumerable.Repeat(func, times)
+                .Aggregate(input, (result, curr) => curr(result));
         }
 
         public static IEnumerable<TResult> InvokeAll<TResult>(this Func<TResult> func)
         {
-            if (func == null)
-                yield break;
+            Contract.Requires<ArgumentNullException>(func != null);
+            Contract.Ensures(Contract.Result<IEnumerable<TResult>>() != null);
 
             var invocations = func.GetInvocationList();
             foreach (var invocation in invocations)
             {
-                yield return (TResult)invocation.DynamicInvoke();
+                var resultObject = invocation.DynamicInvoke();
+                yield return resultObject != null ? (TResult)resultObject : default(TResult);
             }
         }
         public static IEnumerable<TResult> InvokeAll<T1, TResult>(this Func<T1, TResult> func, T1 arg1)
         {
-            if (func == null)
-                yield break;
+            Contract.Requires<ArgumentNullException>(func != null);
+            Contract.Ensures(Contract.Result<IEnumerable<TResult>>() != null);
 
             var invocations = func.GetInvocationList();
             foreach (var invocation in invocations)
             {
-                yield return (TResult)invocation.DynamicInvoke(arg1);
+                var resultObject = invocation.DynamicInvoke(arg1);
+                yield return resultObject != null ? (TResult)resultObject : default(TResult);
             }
         }
         public static IEnumerable<TResult> InvokeAll<T1, T2, TResult>(this Func<T1, T2, TResult> func, T1 arg1, T2 arg2)
         {
-            if (func == null)
-                yield break;
+            Contract.Requires<ArgumentNullException>(func != null);
+            Contract.Ensures(Contract.Result<IEnumerable<TResult>>() != null);
 
             var invocations = func.GetInvocationList();
             foreach (var invocation in invocations)
             {
-                yield return (TResult)invocation.DynamicInvoke(arg1, arg2);
+                var resultObject = invocation.DynamicInvoke(arg1, arg2);
+                yield return resultObject != null ? (TResult)resultObject : default(TResult);
             }
         }
         public static IEnumerable<TResult> InvokeAll<T1, T2, T3, TResult>(this Func<T1, T2, T3, TResult> func, T1 arg1, T2 arg2, T3 arg3)
         {
-            if (func == null)
-                yield break;
+            Contract.Requires<ArgumentNullException>(func != null);
+            Contract.Ensures(Contract.Result<IEnumerable<TResult>>() != null);
 
             var invocations = func.GetInvocationList();
             foreach (var invocation in invocations)
             {
-                yield return (TResult)invocation.DynamicInvoke(arg1, arg2, arg3);
+                var resultObject = invocation.DynamicInvoke(arg1, arg2, arg3);
+                yield return resultObject != null ? (TResult)resultObject : default(TResult);
             }
         }
         public static IEnumerable<TResult> InvokeAll<T1, T2, T3, T4, TResult>(this Func<T1, T2, T3, T4, TResult> func, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
         {
-            if (func == null)
-                yield break;
+            Contract.Requires<ArgumentNullException>(func != null);
+            Contract.Ensures(Contract.Result<IEnumerable<TResult>>() != null);
 
             var invocations = func.GetInvocationList();
             foreach (var invocation in invocations)
             {
-                yield return (TResult)invocation.DynamicInvoke(arg1, arg2, arg3, arg4);
-            }
-        }
-        public static IEnumerable<TResult> InvokeAll<T1, T2, T3, T4, T5, TResult>(this Func<T1, T2, T3, T4, T5, TResult> func, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
-        {
-            if (func == null)
-                yield break;
-
-            var invocations = func.GetInvocationList();
-            foreach (var invocation in invocations)
-            {
-                yield return (TResult)invocation.DynamicInvoke(arg1, arg2, arg3, arg4, arg5);
-            }
-        }
-        public static IEnumerable<TResult> InvokeAll<T1, T2, T3, T4, T5, T6, TResult>(this Func<T1, T2, T3, T4, T5, T6, TResult> func, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6)
-        {
-            if (func == null)
-                yield break;
-
-            var invocations = func.GetInvocationList();
-            foreach (var invocation in invocations)
-            {
-                yield return (TResult)invocation.DynamicInvoke(arg1, arg2, arg3, arg4, arg5, arg6);
-            }
-        }
-        public static IEnumerable<TResult> InvokeAll<T1, T2, T3, T4, T5, T6, T7, TResult>(this Func<T1, T2, T3, T4, T5, T6, T7, TResult> func, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7)
-        {
-            if (func == null)
-                yield break;
-
-            var invocations = func.GetInvocationList();
-            foreach (var invocation in invocations)
-            {
-                yield return (TResult)invocation.DynamicInvoke(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-            }
-        }
-        public static IEnumerable<TResult> InvokeAll<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(this Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> func, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8)
-        {
-            if (func == null)
-                yield break;
-
-            var invocations = func.GetInvocationList();
-            foreach (var invocation in invocations)
-            {
-                yield return (TResult)invocation.DynamicInvoke(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                var resultObject = invocation.DynamicInvoke(arg1, arg2, arg3, arg4);
+                yield return resultObject != null ? (TResult)resultObject : default(TResult);
             }
         }
     }
@@ -143,10 +103,6 @@ namespace TommiUtility.Delegates
             TestInvokeAll2();
             TestInvokeAll3();
             TestInvokeAll4();
-            TestInvokeAll5();
-            TestInvokeAll6();
-            TestInvokeAll7();
-            TestInvokeAll8();
         }
         private void TestInvokeAll0()
         {
@@ -156,13 +112,7 @@ namespace TommiUtility.Delegates
             func += () => 2;
 
             var result = func.InvokeAll().ToArray();
-
-            Assert.AreEqual(3, result.Length);
-
-            for (var i = 0; i < 3; i++)
-            {
-                Assert.AreEqual(i, result[i]);
-            }
+            AssertUtil.SequenceEqual(new[] { 0, 1, 2 }, result);
         }
         private void TestInvokeAll1()
         {
@@ -172,13 +122,7 @@ namespace TommiUtility.Delegates
             func += (t1) => 2;
 
             var result = func.InvokeAll(0).ToArray();
-
-            Assert.AreEqual(3, result.Length);
-
-            for (var i = 0; i < 3; i++)
-            {
-                Assert.AreEqual(i, result[i]);
-            }
+            AssertUtil.SequenceEqual(new[] { 0, 1, 2 }, result);
         }
         private void TestInvokeAll2()
         {
@@ -188,13 +132,7 @@ namespace TommiUtility.Delegates
             func += (t1, t2) => 2;
 
             var result = func.InvokeAll(0, 1).ToArray();
-
-            Assert.AreEqual(3, result.Length);
-
-            for (var i = 0; i < 3; i++)
-            {
-                Assert.AreEqual(i, result[i]);
-            }
+            AssertUtil.SequenceEqual(new[] { 0, 1, 2 }, result);
         }
         private void TestInvokeAll3()
         {
@@ -204,13 +142,7 @@ namespace TommiUtility.Delegates
             func += (t1, t2, t3) => 2;
 
             var result = func.InvokeAll(0, 1, 2).ToArray();
-
-            Assert.AreEqual(3, result.Length);
-
-            for (var i = 0; i < 3; i++)
-            {
-                Assert.AreEqual(i, result[i]);
-            }
+            AssertUtil.SequenceEqual(new[] { 0, 1, 2 }, result);
         }
         private void TestInvokeAll4()
         {
@@ -220,77 +152,7 @@ namespace TommiUtility.Delegates
             func += (t1, t2, t3, t4) => 2;
 
             var result = func.InvokeAll(0, 1, 2, 3).ToArray();
-
-            Assert.AreEqual(3, result.Length);
-
-            for (var i = 0; i < 3; i++)
-            {
-                Assert.AreEqual(i, result[i]);
-            }
-        }
-        private void TestInvokeAll5()
-        {
-            Func<int, int, int, int, int, int> func = null;
-            func += (t1, t2, t3, t4, t5) => 0;
-            func += (t1, t2, t3, t4, t5) => 1;
-            func += (t1, t2, t3, t4, t5) => 2;
-
-            var result = func.InvokeAll(0, 1, 2, 3, 4).ToArray();
-
-            Assert.AreEqual(3, result.Length);
-
-            for (var i = 0; i < 3; i++)
-            {
-                Assert.AreEqual(i, result[i]);
-            }
-        }
-        private void TestInvokeAll6()
-        {
-            Func<int, int, int, int, int, int, int> func = null;
-            func += (t1, t2, t3, t4, t5, t6) => 0;
-            func += (t1, t2, t3, t4, t5, t6) => 1;
-            func += (t1, t2, t3, t4, t5, t6) => 2;
-
-            var result = func.InvokeAll(0, 1, 2, 3, 4, 5).ToArray();
-
-            Assert.AreEqual(3, result.Length);
-
-            for (var i = 0; i < 3; i++)
-            {
-                Assert.AreEqual(i, result[i]);
-            }
-        }
-        private void TestInvokeAll7()
-        {
-            Func<int, int, int, int, int, int, int, int> func = null;
-            func += (t1, t2, t3, t4, t5, t6, t7) => 0;
-            func += (t1, t2, t3, t4, t5, t6, t7) => 1;
-            func += (t1, t2, t3, t4, t5, t6, t7) => 2;
-
-            var result = func.InvokeAll(0, 1, 2, 3, 4, 5, 6).ToArray();
-
-            Assert.AreEqual(3, result.Length);
-
-            for (var i = 0; i < 3; i++)
-            {
-                Assert.AreEqual(i, result[i]);
-            }
-        }
-        private void TestInvokeAll8()
-        {
-            Func<int, int, int, int, int, int, int, int, int> func = null;
-            func += (t1, t2, t3, t4, t5, t6, t7, t8) => 0;
-            func += (t1, t2, t3, t4, t5, t6, t7, t8) => 1;
-            func += (t1, t2, t3, t4, t5, t6, t7, t8) => 2;
-
-            var result = func.InvokeAll(0, 1, 2, 3, 4, 5, 6, 7).ToArray();
-
-            Assert.AreEqual(3, result.Length);
-
-            for (var i = 0; i < 3; i++)
-            {
-                Assert.AreEqual(i, result[i]);
-            }
+            AssertUtil.SequenceEqual(new[] { 0, 1, 2 }, result);
         }
     }
 }

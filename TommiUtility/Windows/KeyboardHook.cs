@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -20,8 +21,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     keyPress += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -29,7 +34,11 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     keyPress -= value;
-                    TryStopHook();
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
@@ -41,8 +50,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     keyUp += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -50,7 +63,11 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     keyUp -= value;
-                    TryStopHook();
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
@@ -62,8 +79,12 @@ namespace TommiUtility.Windows
             {
                 lock (locker)
                 {
-                    TryStartHook();
                     keyDown += value;
+
+                    if (HasHookEvents())
+                    {
+                        TryStartHook();
+                    }
                 }
             }
             remove
@@ -71,33 +92,37 @@ namespace TommiUtility.Windows
                 lock (locker)
                 {
                     keyDown -= value;
-                    TryStopHook();
+
+                    if (HasHookEvents() == false)
+                    {
+                        TryStopHook();
+                    }
                 }
             }
         }
 
-        private static KeyboardHook keyboardHook = null;
+        private static bool HasHookEvents()
+        {
+            return keyPress != null || keyUp != null || keyDown != null;
+        }
+        private static volatile KeyboardHook keyboardHook = null;
         private static void TryStartHook()
         {
-            if (keyboardHook != null)
+            lock (locker)
             {
-                return;
-            }
+                if (keyboardHook != null) return;
 
-            keyboardHook = new KeyboardHook();
+                keyboardHook = new KeyboardHook();
+            }
         }
         private static void TryStopHook()
         {
-            if (keyboardHook != null)
+            lock (locker)
             {
-                if (keyDown == null
-                    && keyUp == null
-                    && keyPress == null)
-                {
-                    keyboardHook.Dispose();
+                if (keyboardHook == null) return;
 
-                    keyboardHook = null;
-                }
+                keyboardHook.Dispose();
+                keyboardHook = null;
             }
         }
 
@@ -128,8 +153,14 @@ namespace TommiUtility.Windows
         {
             Dispose(false);
         }
+        
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(applicationContext != null);
+        }
 
-        private ApplicationContext applicationContext = new ApplicationContext();
+        private readonly ApplicationContext applicationContext = new ApplicationContext();
         private void RunApplication()
         {
             var moduleHandler = NativeMethods.KeyboardHookGetModuleHandle(typeof(KeyboardHook).Module.FullyQualifiedName);
@@ -156,6 +187,7 @@ namespace TommiUtility.Windows
         }
 
         private IntPtr hookHandle;
+        [ContractVerification(false)]
         private IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam)
         {
             //indicates if any of underlaing events set e.Handled flag
@@ -196,7 +228,7 @@ namespace TommiUtility.Windows
                         if ((isDownCapslock ^ isDownShift) && Char.IsLetter(key)) key = Char.ToUpper(key);
                         KeyPressEventArgs e = new KeyPressEventArgs(key);
                         TryInvoke(keyPress, typeof(KeyboardHook), e);
-                        handled = handled || e.Handled;
+                        handled |= e.Handled;
                     }
                 }
 
@@ -206,7 +238,7 @@ namespace TommiUtility.Windows
                     Keys keyData = (Keys)keyboardHookStruct.VirtualKeyCode;
                     KeyEventArgs e = new KeyEventArgs(keyData);
                     TryInvoke(keyUp, typeof(KeyboardHook), e);
-                    handled = handled || e.Handled;
+                    handled |= e.Handled;
                 }
 
             }
@@ -234,9 +266,14 @@ namespace TommiUtility.Windows
                 delegates = @event.GetInvocationList();
             }
 
+            Contract.Assume(delegates != null);
+
             foreach (var @delegate in delegates)
             {
-                @delegate.DynamicInvoke(args);
+                if (@delegate != null)
+                {
+                    @delegate.DynamicInvoke(args);
+                }
             }
         }
     }

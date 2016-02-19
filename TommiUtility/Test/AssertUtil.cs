@@ -22,36 +22,32 @@ namespace TommiUtility.Test
             }
             catch (TException) { }
         }
-    }
 
-    [TestClass]
-    public class AssertUtilTest
-    {
-        [TestMethod]
-        public void TestThrow()
+        public static void SequenceEqual<T>(IEnumerable<T> expected, IEnumerable<T> result)
         {
-            AssertUtil.Throw<Exception>(() => { throw new Exception(); });
+            Contract.Requires<ArgumentNullException>(expected != null);
+            Contract.Requires<ArgumentNullException>(result != null);
 
-            try
-            {
-                AssertUtil.Throw<ArgumentException>(() => { throw new Exception(); });
-                Assert.Fail();
-            }
-            catch (Exception) { }
+            Assert.IsTrue(expected.SequenceEqual(result));
+        }
+        public static void SequenceEqual<T>(IEnumerable<T> expected, IEnumerable<T> result, Func<T, T, bool> comparison)
+        {
+            Contract.Requires<ArgumentNullException>(expected != null);
+            Contract.Requires<ArgumentNullException>(result != null);
+            Contract.Requires<ArgumentNullException>(comparison != null);
 
-            try
-            {
-                AssertUtil.Throw<Exception>(() => { });
-                Assert.Fail();
-            }
-            catch (AssertFailedException) { }
+            var expectedEnumerator = expected.GetEnumerator();
+            var resultEnumerator = result.GetEnumerator();
 
-            try
+            while (expectedEnumerator.MoveNext())
             {
-                AssertUtil.Throw<Exception>(action: null);
-                Assert.Fail();
+                Assert.IsTrue(resultEnumerator.MoveNext());
+
+                var itemsEqual = comparison(expectedEnumerator.Current, resultEnumerator.Current);
+                Assert.IsTrue(itemsEqual);
             }
-            catch (ArgumentNullException) { }
+
+            Assert.IsFalse(resultEnumerator.MoveNext());
         }
     }
 }

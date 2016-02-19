@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -16,15 +17,29 @@ namespace TommiUtility.Binding
     {
         public NotifyPropertyRegister(PropertyChangedEventHandler propertyChangedEventHandler)
         {
+            Contract.Requires<ArgumentNullException>(propertyChangedEventHandler != null);
+
             this.propertyChangedEventHandler = propertyChangedEventHandler;
         }
-        private PropertyChangedEventHandler propertyChangedEventHandler;
+        private readonly PropertyChangedEventHandler propertyChangedEventHandler;
+
+        private readonly Dictionary<string, object> values = new Dictionary<string, object>();
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(propertyChangedEventHandler != null);
+            Contract.Invariant(values != null);
+        }
 
         public T GetValue<T>([CallerMemberName]string propertyName = "")
         {
+            Contract.Requires<ArgumentException>(string.IsNullOrEmpty(propertyName) == false);
+
             if (values.ContainsKey(propertyName))
             {
                 var value = values[propertyName];
+
+                if (value == null) return default(T);
                 return (T)value;
             }
             else
@@ -34,6 +49,8 @@ namespace TommiUtility.Binding
         }
         public void SetValue<T>(T value, [CallerMemberName]string propertyName = "")
         {
+            Contract.Requires<ArgumentException>(string.IsNullOrEmpty(propertyName) == false);
+
             var oldValue = values.ContainsKey(propertyName) ? values[propertyName] : default(T);
             
             if (object.Equals(oldValue, value))
@@ -46,8 +63,6 @@ namespace TommiUtility.Binding
             var e = new PropertyChangedEventArgs(propertyName);
             propertyChangedEventHandler(propertyChangedEventHandler.Target, e);
         }
-
-        private Dictionary<string, object> values = new Dictionary<string, object>();
     }
 
     [TestClass]
@@ -57,11 +72,17 @@ namespace TommiUtility.Binding
         {
             propertyRegister = new NotifyPropertyRegister(OnPropertyChanged);
         }
-        private NotifyPropertyRegister propertyRegister;
+        private readonly NotifyPropertyRegister propertyRegister;
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(propertyRegister != null);
+        }
         
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
+            Contract.Requires(PropertyChanged != null);
             PropertyChanged(sender, e);
         }
 

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Office.Interop.Excel;
@@ -14,7 +16,13 @@ namespace TommiUtility.MicrosoftOffice
     {
         public ExcelFile(string filePath)
         {
+            Contract.Requires<ArgumentNullException>(filePath != null);
+            Contract.Requires<ArgumentException>(filePath.Length > 0);
+
             FilePath = Path.GetFullPath(filePath);
+
+            excel = StartExcel();
+            if (excel.Workbooks == null) throw new InvalidOperationException();
 
             if (File.Exists(FilePath))
             {
@@ -37,24 +45,27 @@ namespace TommiUtility.MicrosoftOffice
         }
         private void Dispose(bool disposing)
         {
-            if (excel != null)
+            var workbooks = excel.Workbooks.OfType<Workbook>();
+            foreach (Workbook workbook in workbooks)
             {
-                foreach (Workbook workbook in excel.Workbooks)
-                {
-                    workbook.Close(SaveChanges: false);
-                }
-
-                excel.Quit();
-                excel = null;
+                workbook.Close(SaveChanges: false);
             }
+
+            excel.Quit();
         }
         ~ExcelFile()
         {
             Dispose(false);
         }
 
-        private ExcelApplication excel = new ExcelApplication();
-        private Workbook workbook;
+        private readonly ExcelApplication excel;
+        private readonly Workbook workbook;
+
+        [ContractVerification(false)]
+        private static ExcelApplication StartExcel()
+        {
+            return new ExcelApplication();
+        }
 
         public string FilePath { get; private set; }
         private bool isNewFile;
@@ -73,19 +84,28 @@ namespace TommiUtility.MicrosoftOffice
 
         public ExcelSheet GetSheet(string sheetName, bool createIfAbsent = false)
         {
-            var sheet = excel.ActiveWorkbook.Worksheets.Cast<Worksheet>()
-                .FirstOrDefault(t => t.Name == sheetName);
+            Contract.Requires<ArgumentNullException>(sheetName != null);
+            Contract.Requires<ArgumentException>(sheetName.Length > 0);
+            Contract.Ensures(Contract.Result<ExcelSheet>() != null);
 
-            if (sheet == null)
+            Contract.Assume(excel.ActiveWorkbook != null);
+            Contract.Assume(excel.ActiveWorkbook.Worksheets != null);
+            var worksheets = excel.ActiveWorkbook.Worksheets.OfType<Worksheet>();
+            var worksheet = worksheets.FirstOrDefault(t => t.Name == sheetName);
+
+            if (worksheet == null)
             {
-                if (createIfAbsent == false)
-                    throw new ArgumentException();
+                if (createIfAbsent == false) throw new ArgumentException();
 
-                sheet = excel.ActiveWorkbook.Worksheets.Add();
-                sheet.Name = sheetName;
+                worksheet = excel.ActiveWorkbook.Worksheets.Add();
+                Contract.Assume(worksheet != null);
+
+                worksheet.Name = sheetName;
             }
 
-            return new ExcelSheet(this, sheet);
+            Contract.Assume(excel.Workbooks != null);
+            Contract.Assume(worksheet.Cells != null);
+            return new ExcelSheet(this, worksheet);
         }
     }
 
@@ -93,11 +113,23 @@ namespace TommiUtility.MicrosoftOffice
     {
         public ExcelSheet(ExcelFile file, Worksheet sheet)
         {
+            Contract.Requires<ArgumentNullException>(file != null);
+            Contract.Requires<ArgumentNullException>(sheet != null);
+            Contract.Requires<ArgumentNullException>(sheet.Cells != null);
+
             File = file;
             Sheet = sheet;
         }
-        public ExcelFile File { get; private set; }
-        public Worksheet Sheet { get; private set; }
+        public readonly ExcelFile File;
+        public readonly Worksheet Sheet;
+
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(File != null);
+            Contract.Invariant(Sheet != null);
+            Contract.Invariant(Sheet.Cells != null);
+        }
 
         public object this[int row, string column]
         {
@@ -107,7 +139,10 @@ namespace TommiUtility.MicrosoftOffice
             }
             set
             {
-                Sheet.Cells[row, column].Value = value;
+                var cell = Sheet.Cells[row, column];
+                if (cell == null) throw new ArgumentException();
+
+                cell.Value = value;
             }
         }
     }

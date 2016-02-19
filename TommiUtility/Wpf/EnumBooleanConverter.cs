@@ -17,12 +17,10 @@ namespace TommiUtility.Wpf
         {
             if (parameter is string == false) return DependencyProperty.UnsetValue;
 
-            var matches = Regex.Matches((string)parameter,
-                @"\((?<false>[^\s,]+)\)|(?<true>[^,\s]+)");
+            var matches = Regex.Matches((string)parameter, @"\((?<false>[^\s,]+)\)|(?<true>[^,\s]+)");
             var enumValues = matches.Cast<Match>().ToLookup(
-                t => t.Groups["true"].Success,
-                t => t.Groups["true"].Success ?
-                    t.Groups["true"].Value : t.Groups["false"].Value);
+                keySelector: t => t.Groups["true"].Success,
+                elementSelector: t => t.Groups["true"].Success ? t.Groups["true"].Value : t.Groups["false"].Value);
 
             if (targetType == null) return DependencyProperty.UnsetValue;
 
@@ -31,10 +29,11 @@ namespace TommiUtility.Wpf
                 if (value is bool == false) return DependencyProperty.UnsetValue;
 
                 var outputValues = enumValues[(bool)value];
-
                 if (outputValues.Any() == false) return DependencyProperty.UnsetValue;
 
                 var outputValue = outputValues.First();
+                Contract.Assume(outputValue != null);
+
                 return Enum.Parse(targetType, outputValue);
             }
             else if (targetType == typeof(bool) || targetType == typeof(bool?))

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -18,21 +19,27 @@ namespace TommiUtility.Runtime
 
         public Assembly Compile(string code)
         {
+            Contract.Requires<ArgumentNullException>(code != null);
+            Contract.Ensures(Contract.Result<Assembly>() != null);
+
             var options = new CompilerParameters();
             options.GenerateExecutable = false;
             options.GenerateInMemory = false;
 
             if (ReferencedAssemblies != null)
             {
+                Contract.Assume(options.ReferencedAssemblies != null);
                 options.ReferencedAssemblies.AddRange(ReferencedAssemblies);
             }
 
             var provider = new CSharpCodeProvider();
             var result = provider.CompileAssemblyFromSource(options, code);
+            Contract.Assume(result != null);
 
-            if (result.Errors.Count > 0)
-                throw new CompileException { Errors = result.Errors };
-            
+            Contract.Assume(result.Errors != null);
+            if (result.Errors.Count > 0) throw new CompileException { Errors = result.Errors };
+
+            Contract.Assume(result.CompiledAssembly != null);
             return result.CompiledAssembly;
         }
     }
@@ -74,12 +81,16 @@ namespace TommiUtility.Runtime
 
             var assembly = compiler.Compile(code);
             var type = assembly.GetType("Test.Abc");
+            Assert.IsNotNull(type);
+            Contract.Assume(type != null);
 
             var abc = Activator.CreateInstance(type);
 
             var method = type.GetMethod("Get");
-            var result = method.Invoke(abc, null);
+            Assert.IsNotNull(method);
+            Contract.Assume(method != null);
 
+            var result = method.Invoke(abc, null);
             Assert.AreEqual("abc", result);
         }
     }

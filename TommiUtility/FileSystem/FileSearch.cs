@@ -1,44 +1,63 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TommiUtility.Test;
 
 namespace TommiUtility.FileSystem
 {
+    [ContractClass(typeof(FileSearchContract))]
     public abstract class FileSearch
     {
         public static FileSearch Create(params string[] paths)
         {
-            if (paths.Length > 1)
-            {
-                var rootSearches = paths.Select(t => new RootFileSearch(t));
+            Contract.Requires<ArgumentNullException>(paths != null);
+            Contract.Requires<ArgumentException>(paths.Length >= 1);
+            Contract.Requires<ArgumentException>(Contract.ForAll(0, paths.Length, i => paths[i] != null));
+            Contract.Ensures(Contract.Result<FileSearch>() != null);
 
-                return new CombineFileSearch(rootSearches.ToArray());
+            if (paths.Length == 1)
+            {
+                var path = paths[0];
+                return new RootFileSearch(path);
             }
             else
             {
-                var path = paths.First();
+                var rootSearches = paths.Select(t => new RootFileSearch(t)).ToArray();
+                Contract.Assume(Contract.ForAll(0, rootSearches.Length, i => rootSearches[i] != null));
 
-                return new RootFileSearch(path);
+                return new CombineFileSearch(rootSearches);
             }
         }
 
         public FileSearch Next(string pattern, SearchOption searchOption = SearchOption.TopDirectoryOnly)
         {
+            Contract.Requires<ArgumentNullException>(pattern != null);
+            Contract.Requires<ArgumentException>(pattern.Length > 0);
+            Contract.Ensures(Contract.Result<FileSearch>() != null);
+
             return new SubFileSearch(this, pattern, searchOption);
         }
         public FileSearch Next(string[] patterns, SearchOption searchOption = SearchOption.TopDirectoryOnly)
         {
-            var subSearches = patterns.Select(t => new SubFileSearch(this, t, searchOption));
+            Contract.Requires<ArgumentNullException>(patterns != null);
+            Contract.Ensures(Contract.Result<FileSearch>() != null);
 
-            return new CombineFileSearch(subSearches.ToArray());
+            var subSearches = patterns.Select(t => new SubFileSearch(this, t, searchOption)).ToArray();
+            Contract.Assume(Contract.ForAll(subSearches, t => t != null));
+
+            return new CombineFileSearch(subSearches);
         }
         
         public FileSearch Concat(FileSearch fileSearch)
         {
+            Contract.Requires<ArgumentNullException>(fileSearch != null);
+            Contract.Ensures(Contract.Result<FileSearch>() != null);
+
             return new CombineFileSearch(new[] { this, fileSearch });
         }
 
@@ -46,17 +65,38 @@ namespace TommiUtility.FileSystem
         public abstract IEnumerable<string> GetDirectories();
     }
 
+    [ContractClassFor(typeof(FileSearch))]
+    public abstract class FileSearchContract : FileSearch
+    {
+        public override IEnumerable<string> GetFiles()
+        {
+            Contract.Ensures(Contract.Result<IEnumerable<string>>() != null);
+            return null;
+        }
+        public override IEnumerable<string> GetDirectories()
+        {
+            Contract.Ensures(Contract.Result<IEnumerable<string>>() != null);
+            return null;
+        }
+    }
+
     internal class RootFileSearch : FileSearch
     {
         public RootFileSearch(string path)
         {
+            Contract.Requires<ArgumentNullException>(path != null);
+            Contract.Requires<ArgumentException>(path.Length > 0);
+
             this.path = path;
         }
-        private string path;
+        private readonly string path;
 
         public override IEnumerable<string> GetFiles()
         {
-            return new string[0];
+            if (File.Exists(path))
+            {
+                yield return path;
+            }
         }
         public override IEnumerable<string> GetDirectories()
         {
@@ -71,13 +111,23 @@ namespace TommiUtility.FileSystem
     {
         public SubFileSearch(FileSearch parent, string pattern, SearchOption searchOption)
         {
+            Contract.Requires<ArgumentNullException>(parent != null);
+            Contract.Requires<ArgumentNullException>(pattern != null);
+            Contract.Requires<ArgumentException>(pattern.Length > 0);
+
             this.parent = parent;
             this.pattern = pattern;
             this.searchOption = searchOption;
         }
-        private FileSearch parent;
-        private string pattern;
-        private SearchOption searchOption;
+        private readonly FileSearch parent;
+        private readonly string pattern;
+        private readonly SearchOption searchOption;
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(parent != null);
+            Contract.Invariant(pattern != null);
+        }
 
         public override IEnumerable<string> GetFiles()
         {
@@ -95,9 +145,17 @@ namespace TommiUtility.FileSystem
     {
         public CombineFileSearch(params FileSearch[] fileSearches)
         {
+            Contract.Requires<ArgumentNullException>(fileSearches != null);
+            Contract.Requires<ArgumentException>(Contract.ForAll(0, fileSearches.Length, i => fileSearches[i] != null));
+
             this.fileSearches = fileSearches;
         }
-        private FileSearch[] fileSearches;
+        private readonly FileSearch[] fileSearches;
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(fileSearches != null);
+        }
 
         public override IEnumerable<string> GetFiles()
         {
@@ -135,7 +193,14 @@ namespace TommiUtility.FileSystem
                     .Next(new[] { "AAA", "BBB" })
                     .Next("*.txt")
                     .GetFiles().ToArray();
+                AssertUtil.SequenceEqual(new[]
+                {
+                    @"Test\123\AAA\111.txt",
+                    @"Test\123\BBB\111.txt"
+                }, search1);
+
                 Assert.AreEqual(2, search1.Length);
+                Contract.Assume(search1.Length >= 2);
                 Assert.AreEqual(@"Test\123\AAA\111.txt", search1[0]);
                 Assert.AreEqual(@"Test\123\BBB\111.txt", search1[1]);
 
@@ -143,19 +208,23 @@ namespace TommiUtility.FileSystem
                     .Next("123", SearchOption.AllDirectories)
                     .Next("AAA", SearchOption.AllDirectories)
                     .GetDirectories().ToArray();
-                Assert.AreEqual(3, search2.Length);
-                Assert.AreEqual(@"Test\123\AAA", search2[0]);
-                Assert.AreEqual(@"Test\234\BBB\123\AAA", search2[1]);
-                Assert.AreEqual(@"Test\234\BBB\123\KKK\AAA", search2[2]);
+                AssertUtil.SequenceEqual(new[]
+                {
+                    @"Test\123\AAA",
+                    @"Test\234\BBB\123\AAA",
+                    @"Test\234\BBB\123\KKK\AAA"
+                }, search2);
 
                 var search3 = FileSearch.Create("Test")
                     .Next("123", SearchOption.AllDirectories)
                     .Next("AAA", SearchOption.AllDirectories)
                     .Next("111.txt").GetFiles().ToArray();
-                Assert.AreEqual(3, search3.Length);
-                Assert.AreEqual(@"Test\123\AAA\111.txt", search3[0]);
-                Assert.AreEqual(@"Test\234\BBB\123\AAA\111.txt", search3[1]);
-                Assert.AreEqual(@"Test\234\BBB\123\KKK\AAA\111.txt", search3[2]);
+                AssertUtil.SequenceEqual(new[]
+                {
+                    @"Test\123\AAA\111.txt",
+                    @"Test\234\BBB\123\AAA\111.txt",
+                    @"Test\234\BBB\123\KKK\AAA\111.txt"
+                }, search3);
             }
             finally
             {

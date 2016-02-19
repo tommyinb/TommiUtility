@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TommiUtility.Test;
 
 namespace TommiUtility.Delegates
 {
@@ -11,6 +13,8 @@ namespace TommiUtility.Delegates
     {
         public static bool Invoke(Action action)
         {
+            Contract.Requires<ArgumentNullException>(action != null);
+
             try
             {
                 action.Invoke();
@@ -24,6 +28,9 @@ namespace TommiUtility.Delegates
 
         public static void Invoke(this Action action, int numberOfTry)
         {
+            Contract.Requires<ArgumentNullException>(action != null);
+            Contract.Requires<ArgumentException>(numberOfTry >= 0);
+
             var exceptions = new List<Exception>();
 
             for (int i = 0; i < numberOfTry; i++)
@@ -43,6 +50,9 @@ namespace TommiUtility.Delegates
         }
         public static T Invoke<T>(this Func<T> func, int numberOfTry)
         {
+            Contract.Requires<ArgumentNullException>(func != null);
+            Contract.Requires<ArgumentException>(numberOfTry >= 0);
+
             var exceptions = new List<Exception>();
 
             for (int i = 0; i < numberOfTry; i++)
@@ -62,6 +72,9 @@ namespace TommiUtility.Delegates
 
         public static T Invoke<T>(this Func<T> func, int numberOfTry, T @default)
         {
+            Contract.Requires<ArgumentNullException>(func != null);
+            Contract.Requires<ArgumentException>(numberOfTry >= 0);
+
             for (int i = 0; i < numberOfTry; i++)
             {
                 try
@@ -81,12 +94,9 @@ namespace TommiUtility.Delegates
         [TestMethod]
         public void TestTryActionInvoke()
         {
-            List<string> tryMessages = new List<string>();
-
-            TryUtil.Invoke(() => tryMessages.Add("Good"), 3);
-
-            Assert.AreEqual(1, tryMessages.Count);
-            Assert.AreEqual("Good", tryMessages.First());
+            var tryMessages = new List<string>();
+            TryUtil.Invoke(() => tryMessages.Add("Good"), numberOfTry: 3);
+            AssertUtil.SequenceEqual(new[] { "Good" }, tryMessages);
 
             try
             {
@@ -107,7 +117,6 @@ namespace TommiUtility.Delegates
             Assert.AreEqual(7, successResult);
 
             var failFunc = new Func<int>(() => { throw new Exception(); });
-
             try
             {
                 failFunc.Invoke(numberOfTry: 3);

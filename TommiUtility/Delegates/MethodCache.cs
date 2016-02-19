@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,62 +10,89 @@ namespace TommiUtility.Delegates
 {
     public class MethodCache
     {
-        private Dictionary<MethodCacheInput, object> cache = new Dictionary<MethodCacheInput, object>();
+        private readonly Dictionary<MethodCacheInput, object> cache = new Dictionary<MethodCacheInput, object>();
 
         public TResult Run<T, TResult>(Func<T, TResult> func, T param)
         {
-            return Run<TResult>(new MethodCacheInput(func, param));
+            Contract.Requires<ArgumentNullException>(func != null);
+
+            var input = new MethodCacheInput(func, param);
+            return Run<TResult>(input);
         }
         public TResult Run<T1, T2, TResult>(Func<T1, T2, TResult> func, T1 param1, T2 param2)
         {
-            return Run<TResult>(new MethodCacheInput(func, param1, param2));
+            Contract.Requires<ArgumentNullException>(func != null);
+
+            var input = new MethodCacheInput(func, param1, param2);
+            return Run<TResult>(input);
         }
         public TResult Run<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> func, T1 param1, T2 param2, T3 param3)
         {
-            return Run<TResult>(new MethodCacheInput(func, param1, param2, param3));
+            Contract.Requires<ArgumentNullException>(func != null);
+
+            var input = new MethodCacheInput(func, param1, param2, param3);
+            return Run<TResult>(input);
         }
         public TResult Run<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> func, T1 param1, T2 param2, T3 param3, T4 param4)
         {
-            return Run<TResult>(new MethodCacheInput(func, param1, param2, param3, param4));
+            Contract.Requires<ArgumentNullException>(func != null);
+
+            var input = new MethodCacheInput(func, param1, param2, param3, param4);
+            return Run<TResult>(input);
         }
 
         private T Run<T>(MethodCacheInput input)
         {
+            Contract.Requires<ArgumentNullException>(input != null);
+            Contract.Requires<ArgumentException>(input.Delegate != null);
+
             if (cache.ContainsKey(input))
             {
                 var value = cache[input];
+                if (value == null) return default(T);
                 return (T)value;
             }
             else
             {
-                var value = (T)input.Delegate.DynamicInvoke(input.Parameters);
+                var value = input.Delegate.DynamicInvoke(input.Parameters); ;
                 cache[input] = value;
-                return value;
+
+                if (value == null) return default(T);
+                return (T)value;
             }
+        }
+
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(cache != null);
         }
     }
 
     public class MethodCacheInput
     {
-        public MethodCacheInput(Delegate Delegate, params object[] parameters)
+        public MethodCacheInput(Delegate @delegate, params object[] parameters)
         {
-            this.Delegate = Delegate;
+            Contract.Requires<ArgumentNullException>(@delegate != null);
+            Contract.Requires<ArgumentNullException>(parameters != null);
+
+            this.Delegate = @delegate;
             this.Parameters = parameters;
 
-            hashCode = Delegate.GetHashCode();
-            foreach (var parameter in parameters)
-            {
-                if (parameter != null)
-                {
-                    hashCode ^= parameter.GetHashCode();
-                }
-            }
+            var parameterObjects = parameters.Where(t => t != null);
+            hashCode = parameterObjects.Aggregate(@delegate.GetHashCode(), (total, curr) => total ^ curr.GetHashCode());
         }
 
-        public Delegate Delegate { get; private set; }
-        public object[] Parameters { get; private set; }
+        public readonly Delegate Delegate;
+        public readonly object[] Parameters;
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(Delegate != null);
+            Contract.Invariant(Parameters != null);
+        }
 
-        private int hashCode;
+        private readonly int hashCode;
         public override int GetHashCode()
         {
             return hashCode;
@@ -81,7 +109,8 @@ namespace TommiUtility.Delegates
                 {
                     var input = (MethodCacheInput)obj;
 
-                    return Delegate.Equals(input.Delegate)
+                    return object.Equals(Delegate, input.Delegate)
+                        && input.Parameters != null
                         && Parameters.SequenceEqual(input.Parameters);
                 }
                 else

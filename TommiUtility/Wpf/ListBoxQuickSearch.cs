@@ -27,11 +27,17 @@ namespace TommiUtility.Wpf
             listBox.KeyDown -= KeyDown;
         }
 
-        private ListBox listBox;
-        private Func<object, string> wordSelector;
-
-        private StringBuilder text = new StringBuilder();
+        private readonly ListBox listBox;
+        private readonly Func<object, string> wordSelector;
+        private readonly StringBuilder text = new StringBuilder();
         private DateTime lastTime = DateTime.Now;
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(listBox != null);
+            Contract.Invariant(wordSelector != null);
+            Contract.Invariant(text != null);
+        }
 
         private void KeyDown(object sender, KeyEventArgs e)
         {

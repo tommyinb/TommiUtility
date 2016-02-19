@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -15,11 +16,14 @@ namespace TommiUtility.Web
         {
             using (var webClient = new WebClient())
             {
-                var response = webClient.DownloadString(
-                    "http://www.hko.gov.hk/cgi-bin/gts/time5a.pr");
+                var response = webClient.DownloadString("http://www.hko.gov.hk/cgi-bin/gts/time5a.pr");
+                if (response == null) throw new InvalidOperationException();
 
                 var match = Regex.Match(response, @"\d+=(?<value>\d+)");
-                var value = long.Parse(match.Groups["value"].Value);
+                var group = match.Groups["value"];
+                Contract.Assume(group != null);
+
+                var value = long.Parse(group.Value);
                 var timeSpan = new TimeSpan(value * TimeSpan.TicksPerMillisecond);
 
                 var standardStartTime = DateTime.SpecifyKind(

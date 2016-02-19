@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,23 +13,37 @@ namespace TommiUtility.Collections
     {
         public static void SetItems<T>(this IList<T> list, IEnumerable<T> items)
         {
+            Contract.Requires<ArgumentNullException>(list != null);
+            Contract.Requires<ArgumentNullException>(items != null);
+
             var index = 0;
             foreach (var item in items)
             {
-                var matchIndex = Enumerable.Range(index, list.Count - index)
-                    .Where(t => object.Equals(list[t], item))
-                    .Select(t => new int?(t)).FirstOrDefault();
-
-                if (matchIndex != null)
+                if (index < list.Count)
                 {
-                    for (int j = index; j < matchIndex.Value; j++)
+                    Contract.Assume(list.Count <= int.MaxValue);
+
+                    var matchIndex = Enumerable.Range(index, list.Count - index)
+                        .Where(t => object.Equals(list[t], item))
+                        .Select(t => new int?(t)).FirstOrDefault();
+
+                    if (matchIndex != null)
                     {
-                        list.RemoveAt(index);
+                        for (int j = index; j < matchIndex.Value; j++)
+                        {
+                            Contract.Assume(index < list.Count);
+
+                            list.RemoveAt(index);
+                        }
+                    }
+                    else
+                    {
+                        list.Insert(index, item);
                     }
                 }
                 else
                 {
-                    list.Insert(index, item);
+                    list.Add(item);
                 }
 
                 index++;
@@ -41,23 +56,37 @@ namespace TommiUtility.Collections
         }
         public static void SetItems(this IList list, IEnumerable items)
         {
+            Contract.Requires<ArgumentNullException>(list != null);
+            Contract.Requires<ArgumentNullException>(items != null);
+
             var index = 0;
             foreach (var item in items)
             {
-                var matchIndex = Enumerable.Range(index, list.Count - index)
-                    .Where(t => object.Equals(list[t], item))
-                    .Select(t => new int?(t)).FirstOrDefault();
-
-                if (matchIndex != null)
+                if (index < list.Count)
                 {
-                    for (int j = index; j < matchIndex.Value; j++)
+                    Contract.Assume(list.Count <= int.MaxValue);
+
+                    var matchIndex = Enumerable.Range(index, list.Count - index)
+                        .Where(t => object.Equals(list[t], item))
+                        .Select(t => new int?(t)).FirstOrDefault();
+
+                    if (matchIndex != null)
                     {
-                        list.RemoveAt(index);
+                        for (int j = index; j < matchIndex.Value; j++)
+                        {
+                            Contract.Assume(index < list.Count);
+
+                            list.RemoveAt(index);
+                        }
+                    }
+                    else
+                    {
+                        list.Insert(index, item);
                     }
                 }
                 else
                 {
-                    list.Insert(index, item);
+                    list.Add(item);
                 }
 
                 index++;
@@ -90,20 +119,13 @@ namespace TommiUtility.Collections
             var newB = Tuple.Create(2, "b");
             typedList.SetItems(new[] { a, newB, c });
             Assert.IsTrue(new[] { a, b, c }.SequenceEqual(typedList));
-            Assert.ReferenceEquals(b, typedList[1]);
 
             var newC = Tuple.Create(3, "c");
             typedList.SetItems(new[] { newB, newC, d });
             Assert.IsTrue(new[] { b, c, d }.SequenceEqual(typedList));
-            Assert.ReferenceEquals(b, typedList[0]);
-            Assert.ReferenceEquals(c, typedList[1]);
 
             typedList.SetItems(new[] { a });
-            Assert.AreEqual(1, typedList.Count);
-            Assert.AreEqual(a, typedList.First());
-
-            var rawList = new ArrayList { a, b, d };
-            rawList.SetItems(new[] { newB, newC, e });
+            Assert.IsTrue(new[] { a }.SequenceEqual(typedList));
         }
     }
 }

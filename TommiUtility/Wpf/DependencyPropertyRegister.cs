@@ -16,6 +16,7 @@ namespace TommiUtility.Wpf
         public DependencyProperty Register<TProperty>(Expression<Func<TOwner, TProperty>> property)
         {
             Contract.Requires<ArgumentNullException>(property != null);
+            Contract.Ensures(Contract.Result<DependencyProperty>() != null);
 
             var memberExpression = (MemberExpression)property.Body;
             var propertyInfo = (PropertyInfo)memberExpression.Member;
@@ -25,30 +26,42 @@ namespace TommiUtility.Wpf
         public DependencyProperty Register<TProperty>(Expression<Func<TOwner, TProperty>> property, TProperty defaultValue)
         {
             Contract.Requires<ArgumentNullException>(property != null);
+            Contract.Ensures(Contract.Result<DependencyProperty>() != null);
 
             var memberExpression = (MemberExpression)property.Body;
             var propertyInfo = (PropertyInfo)memberExpression.Member;
-            return DependencyProperty.Register(propertyInfo.Name, propertyInfo.PropertyType, typeof(TOwner), new PropertyMetadata(defaultValue));
+            var dependencyProperty = DependencyProperty.Register(propertyInfo.Name, propertyInfo.PropertyType, typeof(TOwner), new PropertyMetadata(defaultValue));
+
+            Contract.Assume(dependencyProperty != null);
+            return dependencyProperty;
         }
 
         public DependencyProperty Register<TProperty>(Expression<Func<TOwner, TProperty>> property, ValidateValueCallback validation)
         {
             Contract.Requires<ArgumentNullException>(property != null);
             Contract.Requires<ArgumentNullException>(validation != null);
+            Contract.Ensures(Contract.Result<DependencyProperty>() != null);
 
             var memberExpression = (MemberExpression)property.Body;
             var propertyInfo = (PropertyInfo)memberExpression.Member;
-            return DependencyProperty.Register(propertyInfo.Name, propertyInfo.PropertyType, typeof(TOwner), new PropertyMetadata(default(TProperty)), validation);
+            var dependencyProperty = DependencyProperty.Register(propertyInfo.Name, propertyInfo.PropertyType, typeof(TOwner), new PropertyMetadata(default(TProperty)), validation);
+
+            Contract.Assume(dependencyProperty != null);
+            return dependencyProperty;
         }
 
         public DependencyProperty Register<TProperty>(Expression<Func<TOwner, TProperty>> property, TProperty defaultValue, ValidateValueCallback validation)
         {
             Contract.Requires<ArgumentNullException>(property != null);
             Contract.Requires<ArgumentNullException>(validation != null);
+            Contract.Ensures(Contract.Result<DependencyProperty>() != null);
 
             var memberExpression = (MemberExpression)property.Body;
             var propertyInfo = (PropertyInfo)memberExpression.Member;
-            return DependencyProperty.Register(propertyInfo.Name, propertyInfo.PropertyType, typeof(TOwner), new PropertyMetadata(defaultValue), validation);
+            var dependencyProperty = DependencyProperty.Register(propertyInfo.Name, propertyInfo.PropertyType, typeof(TOwner), new PropertyMetadata(defaultValue), validation);
+
+            Contract.Assume(dependencyProperty != null);
+            return dependencyProperty;
         }
     }
 }

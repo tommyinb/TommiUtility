@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -14,31 +15,36 @@ namespace TommiUtility.ImageProcessing
     {
         public RedGreenTransparency(Bitmap redBitmap, Bitmap greenBitmap)
         {
+            Contract.Requires<ArgumentNullException>(redBitmap != null);
+            Contract.Requires<ArgumentNullException>(greenBitmap != null);
+
             if (redBitmap.Size.Equals(greenBitmap.Size) == false)
             {
                 throw new ArgumentException();
             }
 
             this.redBitmap = CopyBitmap(redBitmap);
-            redData = this.redBitmap.LockBits(
-                new Rectangle(Point.Empty, this.redBitmap.Size),
-                ImageLockMode.ReadOnly, this.redBitmap.PixelFormat);
+            var redRectangle = new Rectangle(Point.Empty, redBitmap.Size);
+            redData = redBitmap.LockBits(redRectangle, ImageLockMode.ReadOnly, redBitmap.PixelFormat);
 
             this.greenBitmap = CopyBitmap(greenBitmap);
-            greenData = this.greenBitmap.LockBits(
-                new Rectangle(Point.Empty, this.greenBitmap.Size),
-                ImageLockMode.ReadOnly, this.greenBitmap.PixelFormat);
+            var greenRectangle = new Rectangle(Point.Empty, greenBitmap.Size);
+            greenData = greenBitmap.LockBits(greenRectangle, ImageLockMode.ReadOnly, greenBitmap.PixelFormat);
         }
         private static Bitmap CopyBitmap(Bitmap bitmap)
         {
+            Contract.Requires<ArgumentNullException>(bitmap != null);
+            Contract.Ensures(Contract.Result<Bitmap>() != null);
+
             var copyBitmap = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
 
+            Contract.Assume((copyBitmap.PixelFormat & PixelFormat.Indexed) == 0);
             using (var graphics = Graphics.FromImage(copyBitmap))
             {
                 graphics.DrawImage(bitmap, Point.Empty);
             }
 
-            return bitmap;
+            return copyBitmap;
         }
         public void Dispose()
         {
@@ -49,14 +55,23 @@ namespace TommiUtility.ImageProcessing
             greenBitmap.Dispose();
         }
 
-        private Bitmap redBitmap;
-        private BitmapData redData;
-
-        private Bitmap greenBitmap;
-        private BitmapData greenData;
+        private readonly Bitmap redBitmap;
+        private readonly BitmapData redData;
+        private readonly Bitmap greenBitmap;
+        private readonly BitmapData greenData;
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(redBitmap != null);
+            Contract.Invariant(redData != null);
+            Contract.Invariant(greenBitmap != null);
+            Contract.Invariant(greenData != null);
+        }
 
         public unsafe Bitmap Run()
         {
+            Contract.Ensures(Contract.Result<Bitmap>() != null);
+
             var outputBitmap = new Bitmap(redBitmap.Width, redBitmap.Height, PixelFormat.Format32bppArgb);
             
             var outputData = outputBitmap.LockBits(
@@ -111,7 +126,8 @@ namespace TommiUtility.ImageProcessing
         [TestMethod]
         public unsafe void Test()
         {
-            var inputBitmap = new Bitmap(30, 30);
+            var inputBitmap = new Bitmap(30, 30, PixelFormat.Format32bppArgb);
+            Contract.Assume((inputBitmap.PixelFormat & PixelFormat.Indexed) == 0);
             using (var inputGraphics = Graphics.FromImage(inputBitmap))
             {
                 inputGraphics.DrawEllipse(Pens.Red, new Rectangle(-5, -5, 25, 25));
@@ -123,7 +139,8 @@ namespace TommiUtility.ImageProcessing
                 inputGraphics.DrawEllipse(goldPen, new Rectangle(20, 5, 25, 25));
             }
 
-            var redBitmap = new Bitmap(30, 30);
+            var redBitmap = new Bitmap(30, 30, PixelFormat.Format32bppArgb);
+            Contract.Assume((redBitmap.PixelFormat & PixelFormat.Indexed) == 0);
             using (var redGraphics = Graphics.FromImage(redBitmap))
             {
                 var redPen = new Pen(Color.FromArgb(0xFF, 0, 0));
@@ -132,7 +149,8 @@ namespace TommiUtility.ImageProcessing
                 redGraphics.DrawImage(inputBitmap, Point.Empty);
             }
 
-            var greenBitmap = new Bitmap(30, 30);
+            var greenBitmap = new Bitmap(30, 30, PixelFormat.Format32bppArgb);
+            Contract.Assume((greenBitmap.PixelFormat & PixelFormat.Indexed) == 0);
             using (var greenGraphics = Graphics.FromImage(greenBitmap))
             {
                 var greenPen = new Pen(Color.FromArgb(0, 0xFF, 0));
@@ -152,13 +170,16 @@ namespace TommiUtility.ImageProcessing
             outputBitmap.Save(outputMemory, ImageFormat.Bmp);
             var outputBytes = outputMemory.ToArray();
 
+            Assert.AreEqual(inputBytes.Length, outputBytes.Length);
+            Contract.Assume(outputBytes.Length == inputBytes.Length);
             for (int i = 0; i < inputBytes.Length; i++)
             {
                 var inputByte = inputBytes[i];
                 var outputByte = outputBytes[i];
 
-                var difference = Math.Abs(inputByte - outputByte);
-                Assert.IsTrue(difference <= 1);
+                var difference = inputByte - outputByte;
+                var differenceWithinOne = difference <= 1 && difference >= -1;
+                Assert.IsTrue(differenceWithinOne);
             }
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -13,15 +14,19 @@ namespace TommiUtility.Web
 {
     public sealed class BasicServer : IDisposable
     {
-        public List<IServerResponse> Responses { get; private set; }
+        public readonly List<IServerResponse> Responses = new List<IServerResponse>();
 
         public BasicServer(int port, string directory = ".")
         {
-            Responses = new List<IServerResponse>();
+            Contract.Requires<ArgumentException>(port > 0);
+            Contract.Requires<ArgumentException>(port <= 65535);
+            Contract.Requires<ArgumentException>(string.IsNullOrEmpty(directory) == false);
+
             Responses.Add(new IndexResponse(directory));
             Responses.Add(new FileResponse(directory));
             Responses.Add(new BadRequestResponse());
 
+            Contract.Assume(listener.Prefixes != null);
             listener.Prefixes.Add("http://*:" + port + "/");
             listener.Start();
 
@@ -34,23 +39,41 @@ namespace TommiUtility.Web
             listener.Close();
         }
 
-        private HttpListener listener = new HttpListener();
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(listener != null);
+        }
+
+        private readonly HttpListener listener = new HttpListener();
         private void Listen()
         {
             while (true)
             {
+                HttpListenerContext context;
                 try
                 {
-                    var context = listener.GetContext();
+                    context = listener.GetContext();
+                    Contract.Assume(context != null);
 
                     try
                     {
                         foreach (var response in Responses)
                         {
-                            if (response.IsValid(context.Request))
+                            if (response != null)
                             {
-                                response.Response(context);
-                                break;
+                                Contract.Assume(context.Request != null);
+                                Contract.Assume(context.Request.Url != null);
+
+                                if (response.IsValid(context.Request))
+                                {
+                                    Contract.Assume(context.Request.Url != null);
+                                    Contract.Assume(context.Response != null);
+                                    Contract.Assume(context.Response.OutputStream != null);
+
+                                    response.Response(context);
+                                    break;
+                                }
                             }
                         }
                     }
@@ -58,6 +81,8 @@ namespace TommiUtility.Web
 
                     try
                     {
+                        Contract.Assume(context.Response != null);
+
                         context.Response.Close();
                     }
                     catch (Exception) { }
@@ -70,6 +95,7 @@ namespace TommiUtility.Web
         }
     }
 
+    [ContractClass(typeof(IServerResponseContract))]
     public interface IServerResponse
     {
         bool IsValid(HttpListenerRequest request);
@@ -77,24 +103,63 @@ namespace TommiUtility.Web
         void Response(HttpListenerContext context);
     }
 
+    [ContractClassFor(typeof(IServerResponse))]
+    public abstract class IServerResponseContract : IServerResponse
+    {
+        public bool IsValid(HttpListenerRequest request)
+        {
+            Contract.Requires<ArgumentNullException>(request != null);
+            Contract.Requires<ArgumentException>(request.Url != null);
+            return false;
+        }
+        public void Response(HttpListenerContext context)
+        {
+            Contract.Requires<ArgumentNullException>(context != null);
+            Contract.Requires<ArgumentException>(context.Request != null);
+            Contract.Requires<ArgumentException>(context.Request.Url != null);
+            Contract.Requires<ArgumentException>(context.Response != null);
+            Contract.Requires<ArgumentException>(context.Response.OutputStream != null);
+        }
+    }
+
     public class IndexResponse : IServerResponse
     {
         public IndexResponse(string directory)
         {
-            indexFiles.Add(Path.Combine(directory, "index.html"));
-            indexFiles.Add(Path.Combine(directory, "index.htm"));
+            Contract.Requires<ArgumentNullException>(directory != null);
+            Contract.Requires<ArgumentException>(directory.Length > 0);
+
+            this.directory = directory;
         }
-        private List<string> indexFiles = new List<string>();
+        private readonly string directory;
+
+        private readonly string[] indexFiles = new[] { "index.html", "index.htm" };
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(indexFiles != null);
+            Contract.Invariant(indexFiles.Any());
+        }
 
         public bool IsValid(HttpListenerRequest request)
         {
-            return request.Url.AbsolutePath == "/"
-                && indexFiles.Any(File.Exists);
+            if (request.Url.AbsolutePath == "/")
+            {
+                var indexPaths = indexFiles.Select(t => Path.Combine(directory, t));
+                return indexPaths.Any(File.Exists);
+            }
+            else
+            {
+                return false;
+            }
         }
-
         public void Response(HttpListenerContext context)
         {
-            var indexFile = indexFiles.First(File.Exists);
+            var indexFile = indexFiles.First(t =>
+            {
+                var indexPath = Path.Combine(directory, t);
+                return File.Exists(indexPath);
+            });
 
             context.Response.Redirect(indexFile);
         }
@@ -104,83 +169,95 @@ namespace TommiUtility.Web
     {
         public FileResponse(string directory)
         {
+            Contract.Requires<ArgumentNullException>(directory != null);
+            Contract.Requires<ArgumentException>(directory.Length > 0);
+
             this.directory = directory;
-
-            var addType = new Action<string, FileType, string>((extension, fileType, mimeType) =>
-                extensionTypes.Add(extension, Tuple.Create(fileType, mimeType)));
-
-            addType(".html", FileType.Text, MediaTypeNames.Text.Html);
-            addType(".txt", FileType.Text, MediaTypeNames.Text.Plain);
-            addType(".xml", FileType.Text, MediaTypeNames.Text.Xml);
-            addType(".css", FileType.Text, "text/css");
-            addType(".js", FileType.Text, "text/javascript");
-
-            addType(".exe", FileType.Bytes, MediaTypeNames.Application.Octet);
-            addType(".zip", FileType.Bytes, MediaTypeNames.Application.Zip);
-            addType(".7z", FileType.Bytes, "application/x-7z-compressed");
-            addType(".rar", FileType.Bytes, "application/x-rar-compressed");
-            addType(".pdf", FileType.Bytes, MediaTypeNames.Application.Pdf);
-
-            addType(".png", FileType.Bytes, "image/png");
-            addType(".jpeg", FileType.Bytes, MediaTypeNames.Image.Jpeg);
-            addType(".jpg", FileType.Bytes, MediaTypeNames.Image.Jpeg);
-            addType(".gif", FileType.Bytes, MediaTypeNames.Image.Gif);
-            addType(".tiff", FileType.Bytes, MediaTypeNames.Image.Tiff);
-            addType(".bmp", FileType.Bytes, "image/bmp");
-            addType(".svg", FileType.Bytes, "image/svg+xml");
-            addType(".ico", FileType.Bytes, "image/x-icon");
-
-            addType(".eot", FileType.Bytes, "application/vnd.ms-fontobject");
-            addType(".otf", FileType.Bytes, "application/font-sfnt");
-            addType(".ttf", FileType.Bytes, "application/font-sfnt");
-            addType(".woff", FileType.Bytes, "application/font-woff");
         }
-        private string directory;
+        private readonly string directory;
 
-        private Dictionary<string, Tuple<FileType, string>> extensionTypes =
-            new Dictionary<string, Tuple<FileType, string>>();
-        private enum FileType { Text, Bytes };
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(directory != null);
+        }
 
         public bool IsValid(HttpListenerRequest request)
         {
             var relativeFilePath = request.Url.AbsolutePath.TrimStart('/').Replace("/", @"\");
-            var fileExtension = Path.GetExtension(relativeFilePath);
-
             var localFilePath = Path.Combine(directory, relativeFilePath);
 
-            return extensionTypes.ContainsKey(fileExtension) && File.Exists(localFilePath);
+            if (localFilePath.Length <= 0) return false;
+
+            return File.Exists(localFilePath);
         }
         public void Response(HttpListenerContext context)
         {
             var relativeFilePath = context.Request.Url.AbsolutePath.TrimStart('/').Replace("/", @"\");
             var localFilePath = Path.Combine(directory, relativeFilePath);
+            if (localFilePath.Length <= 0) throw new ArgumentException();
 
             var fileExtension = Path.GetExtension(localFilePath);
-            var extensionType = extensionTypes[fileExtension];
+            var extensionType = GetFileType(fileExtension);
 
             switch (extensionType.Item1)
             {
                 case FileType.Text:
                     var text = File.ReadAllText(localFilePath);
+                    context.Response.ContentEncoding = Encoding.UTF8;
+                    var textBytes = Encoding.UTF8.GetBytes(text);
 
                     context.Response.ContentType = extensionType.Item2;
-                    context.Response.ContentEncoding = Encoding.UTF8;
-
-                    var textBytes = Encoding.UTF8.GetBytes(text);
                     context.Response.ContentLength64 = textBytes.LongLength;
                     context.Response.OutputStream.Write(textBytes, 0, textBytes.Length);
-
                     break;
 
                 case FileType.Bytes:
+                default:
                     var fileBytes = File.ReadAllBytes(localFilePath);
 
                     context.Response.ContentType = extensionType.Item2;
-
                     context.Response.ContentLength64 = fileBytes.LongLength;
                     context.Response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
-
                     break;
+            }
+        }
+
+        private enum FileType { Text, Bytes };
+        [ContractVerification(false)]
+        private Tuple<FileType, string> GetFileType(string extension)
+        {
+            Contract.Ensures(Contract.Result<Tuple<FileType, string>>() != null);
+
+            switch (extension)
+            {
+                case ".html": return Tuple.Create(FileType.Text, MediaTypeNames.Text.Html);
+                case ".txt": return Tuple.Create(FileType.Text, MediaTypeNames.Text.Plain);
+                case ".xml": return Tuple.Create(FileType.Text, MediaTypeNames.Text.Xml);
+                case ".css": return Tuple.Create(FileType.Text, "text/css");
+                case ".js": return Tuple.Create(FileType.Text, "text/javascript");
+
+                case ".exe": return Tuple.Create(FileType.Bytes, MediaTypeNames.Application.Octet);
+                case ".zip": return Tuple.Create(FileType.Bytes, MediaTypeNames.Application.Zip);
+                case ".7z": return Tuple.Create(FileType.Bytes, "application/x-7z-compressed");
+                case ".rar": return Tuple.Create(FileType.Bytes, "application/x-rar-compressed");
+                case ".pdf": return Tuple.Create(FileType.Bytes, MediaTypeNames.Application.Pdf);
+
+                case ".png": return Tuple.Create(FileType.Bytes, "image/png");
+                case ".jpeg": return Tuple.Create(FileType.Bytes, MediaTypeNames.Image.Jpeg);
+                case ".jpg": return Tuple.Create(FileType.Bytes, MediaTypeNames.Image.Jpeg);
+                case ".gif": return Tuple.Create(FileType.Bytes, MediaTypeNames.Image.Gif);
+                case ".tiff": return Tuple.Create(FileType.Bytes, MediaTypeNames.Image.Tiff);
+                case ".bmp": return Tuple.Create(FileType.Bytes, "image/bmp");
+                case ".svg": return Tuple.Create(FileType.Bytes, "image/svg+xml");
+                case ".ico": return Tuple.Create(FileType.Bytes, "image/x-icon");
+
+                case ".eot": return Tuple.Create(FileType.Bytes, "application/vnd.ms-fontobject");
+                case ".otf": return Tuple.Create(FileType.Bytes, "application/font-sfnt");
+                case ".ttf": return Tuple.Create(FileType.Bytes, "application/font-sfnt");
+                case ".woff": return Tuple.Create(FileType.Bytes, "application/font-woff");
+                
+                default: return Tuple.Create(FileType.Bytes, "application/octet-stream");
             }
         }
     }

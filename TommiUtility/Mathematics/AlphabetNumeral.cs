@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,23 +12,16 @@ namespace TommiUtility.Mathematics
     {
         public static int Convert(string @string)
         {
-            if (@string.Length <= 0)
-            {
-                throw new FormatException();
-            }
+            Contract.Requires<ArgumentNullException>(@string != null);
+            Contract.Requires<FormatException>(@string.Length > 0);
+            Contract.Ensures(Contract.Result<int>() >= 0);
 
             var value = 0;
 
             foreach (var digitText in @string)
             {
-                if (digitText < 'A')
-                {
-                    throw new FormatException();
-                }
-                if (digitText > 'Z')
-                {
-                    throw new FormatException();
-                }
+                if (digitText < 'A') throw new FormatException();
+                if (digitText > 'Z') throw new FormatException();
 
                 var digitValue = digitText - 'A';
 
@@ -42,10 +36,9 @@ namespace TommiUtility.Mathematics
 
         public static string Convert(int value)
         {
-            if (value < 0)
-            {
-                throw new ArgumentException();
-            }
+            Contract.Requires<ArgumentException>(value >= 0);
+            Contract.Ensures(Contract.Result<string>() != null);
+            Contract.Ensures(Contract.Result<string>().Length > 0);
 
             var builder = new StringBuilder();
 
@@ -55,6 +48,9 @@ namespace TommiUtility.Mathematics
 
                 builder.Insert(0, digitText);
             }
+
+            var result = builder.ToString();
+            Contract.Assume(result.Length > 0);
 
             return builder.ToString();
         }

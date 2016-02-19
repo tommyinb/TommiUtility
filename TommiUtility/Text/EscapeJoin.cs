@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -10,48 +11,59 @@ namespace TommiUtility.Text
 {
     public class EscapeJoin
     {
-        public EscapeJoin()
+        public EscapeJoin(string seperator = ", ", string escaper = @"\")
         {
-            Seperator = ", ";
-            Escaper = @"\";
+            Contract.Requires<ArgumentNullException>(seperator != null);
+            Contract.Requires<ArgumentException>(seperator.Length > 0);
+            Contract.Requires<ArgumentNullException>(escaper != null);
+            Contract.Requires<ArgumentException>(escaper.Length > 0);
+            Contract.Requires<ArgumentException>(seperator != escaper);
+
+            this.seperator = seperator;
+            this.escaper = escaper;
         }
 
-        public string Seperator { get; set; }
-        public string Escaper { get; set; }
+        private readonly string seperator;
+        private readonly string escaper;
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(seperator != null);
+            Contract.Invariant(escaper != null);
+        }
 
         public string Join(params string[] items)
         {
+            Contract.Requires<ArgumentNullException>(items != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
             return Join((IEnumerable<string>)items);
         }
         public string Join(IEnumerable<string> items)
         {
-            if (Seperator == Escaper)
-            {
-                throw new InvalidOperationException();
-            }
+            Contract.Requires<ArgumentNullException>(items != null);
+            Contract.Ensures(Contract.Result<string>() != null);
 
-            var regexEscaper = Regex.Escape(Escaper);
-            var regexSeperator = Regex.Escape(Seperator);
+            var regexEscaper = Regex.Escape(escaper);
+            var regexSeperator = Regex.Escape(seperator);
 
             var escapedParts = items.Select(Escape).ToArray();
-            return string.Join(Seperator, escapedParts);
+            return string.Join(seperator, escapedParts);
         }
         public IEnumerable<string> Split(string text)
         {
-            if (Seperator == Escaper)
-            {
-                throw new InvalidOperationException();
-            }
+            Contract.Requires<ArgumentNullException>(text != null);
+            Contract.Ensures(Contract.Result<IEnumerable<string>>() != null);
 
-            var regexSeperator = Regex.Escape(Seperator);
-            var regexEscapedEscaper = Regex.Escape(Escaper + Escaper);
-            var regexEscapedSeperator = Regex.Escape(Escaper + Seperator);
+            var regexSeperator = Regex.Escape(seperator);
+            var regexEscapedEscaper = Regex.Escape(escaper + escaper);
+            var regexEscapedSeperator = Regex.Escape(escaper + seperator);
 
             var seperatorMatches = Regex.Matches(text,
                 "(" + regexEscapedEscaper + "|" + regexEscapedSeperator + "|" + regexSeperator + ")");
 
             var seperatorIndexes = seperatorMatches.Cast<Match>()
-                .Where(t => t.Value == Seperator)
+                .Where(t => t.Value == seperator)
                 .Select(t => t.Index).ToArray();
 
             var itemStartIndex = 0;
@@ -61,7 +73,7 @@ namespace TommiUtility.Text
                 var beforeSeperatorItem = Unescape(beforeSeperatorText);
                 yield return beforeSeperatorItem;
 
-                itemStartIndex = seperatorIndex + Seperator.Length;
+                itemStartIndex = seperatorIndex + seperator.Length;
             }
 
             var lastItemText = text.Substring(itemStartIndex);
@@ -71,38 +83,28 @@ namespace TommiUtility.Text
 
         public string Escape(string plainText)
         {
-            if (Seperator == Escaper)
-            {
-                throw new InvalidOperationException();
-            }
+            Contract.Ensures(Contract.Result<string>() != null);
 
-            if (plainText != null)
-            {
-                var regexEscaper = Regex.Escape(Escaper);
-                var regexSeperator = Regex.Escape(Seperator);
+            if (plainText == null) return string.Empty;
 
-                return Regex.Replace(plainText,
-                    "(" + regexEscaper + "|" + regexSeperator + ")",
-                    s => Escaper + s.Value);
-            }
-            else
-            {
-                return string.Empty;
-            }
+            var regexEscaper = Regex.Escape(escaper);
+            var regexSeperator = Regex.Escape(seperator);
+
+            return Regex.Replace(plainText,
+                "(" + regexEscaper + "|" + regexSeperator + ")",
+                s => escaper + s.Value);
         }
         public string Unescape(string escapedText)
         {
-            if (Seperator == Escaper)
-            {
-                throw new InvalidOperationException();
-            }
+            Contract.Requires<ArgumentNullException>(escapedText != null);
+            Contract.Ensures(Contract.Result<string>() != null);
 
-            var regexEscapedEscaper = Regex.Escape(Escaper + Escaper);
-            var regexEscapedSeperator = Regex.Escape(Escaper + Seperator);
+            var regexEscapedEscaper = Regex.Escape(escaper + escaper);
+            var regexEscapedSeperator = Regex.Escape(escaper + seperator);
 
             return Regex.Replace(escapedText,
                 "(" + regexEscapedEscaper + "|" + regexEscapedSeperator + ")",
-                s => s.Value.Substring(Escaper.Length));
+                s => s.Value.Substring(escaper.Length));
         }
     }
 
@@ -112,7 +114,7 @@ namespace TommiUtility.Text
         [TestMethod]
         public void Test()
         {
-            var escapeJoin = new EscapeJoin { Seperator = ", ", Escaper = @"\" };
+            var escapeJoin = new EscapeJoin(seperator: ", ", escaper: @"\");
 
             var text = escapeJoin.Join("123", "234", "345, ", ", ,456", null, @"5\67");
 

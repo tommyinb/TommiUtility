@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,9 @@ namespace TommiUtility.Delegates
     {
         public static void Repeat(this Action action, int times)
         {
+            Contract.Requires<ArgumentNullException>(action != null);
+            Contract.Requires<ArgumentException>(times >= 0);
+
             for (int i = 0; i < times; i++)
             {
                 action.Invoke();

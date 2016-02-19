@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,11 +12,14 @@ namespace TommiUtility.Randomize
     {
         public RandomDraw()
         {
-            drawingValue = random.Value.NextDouble();
+            var random = RandomDraw.random.Value;
+            Contract.Assume(random != null);
+
+            drawingValue = random.NextDouble();
         }
 
         private static Lazy<Random> random = new Lazy<Random>();
-        private double drawingValue;
+        private readonly double drawingValue;
 
         private double drawnProbability = 0;
 

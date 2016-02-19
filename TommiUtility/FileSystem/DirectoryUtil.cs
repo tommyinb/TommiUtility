@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,16 +13,30 @@ namespace TommiUtility.FileSystem
     {
         public static void Copy(string fromPath, string toPath)
         {
+            Contract.Requires<ArgumentNullException>(fromPath != null);
+            Contract.Requires<ArgumentException>(fromPath.Length > 0);
+            Contract.Requires<ArgumentNullException>(toPath != null);
+            Contract.Requires<ArgumentException>(toPath.Length > 0);
+
             Copy(fromPath, toPath, t => true);
         }
         public static void Copy(string fromPath, string toPath, Func<string, bool> filter)
         {
+            Contract.Requires<ArgumentNullException>(fromPath != null);
+            Contract.Requires<ArgumentException>(fromPath.Length > 0);
+            Contract.Requires<ArgumentNullException>(toPath != null);
+            Contract.Requires<ArgumentException>(toPath.Length > 0);
+            Contract.Requires<ArgumentNullException>(filter != null);
+
             Directory.CreateDirectory(toPath);
 
             var fromFiles = Directory.EnumerateFiles(fromPath);
             var validFiles = fromFiles.Where(filter).ToArray();
             foreach (var fromFile in validFiles)
             {
+                Contract.Assume(fromFile != null);
+                Contract.Assume(fromFile.Length > 0);
+
                 var fileName = Path.GetFileName(fromFile);
                 var toFile = Path.Combine(toPath, fileName);
                 File.Copy(fromFile, toFile, overwrite: true);
@@ -31,6 +46,9 @@ namespace TommiUtility.FileSystem
             var validDirectories = fromDirectories.Where(filter).ToArray();
             foreach (var fromDirectory in validDirectories)
             {
+                Contract.Assume(fromDirectory != null);
+                Contract.Assume(fromDirectory.Length > 0);
+
                 var directoryName = Path.GetFileName(fromDirectory);
                 var toDirectory = Path.Combine(toPath, directoryName);
                 Copy(fromDirectory, toDirectory, filter);

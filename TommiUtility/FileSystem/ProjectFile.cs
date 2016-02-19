@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,56 +13,78 @@ namespace TommiUtility.FileSystem
     {
         private static IEnumerable<string> GetPossiblePaths(string relativePath)
         {
+            Contract.Requires<ArgumentNullException>(relativePath != null);
+            Contract.Requires<ArgumentException>(relativePath.Length > 0);
+            Contract.Ensures(Contract.Result<IEnumerable<string>>() != null);
+
             yield return relativePath;
             yield return Path.Combine(@"..\..", relativePath);
         }
+        public static string[] GetValidPaths(string relativePath)
+        {
+            Contract.Requires<ArgumentNullException>(relativePath != null);
+            Contract.Requires<ArgumentException>(relativePath.Length > 0);
+            Contract.Ensures(Contract.Result<string[]>() != null);
+
+            var possiblePaths = GetPossiblePaths(relativePath);
+            var existPaths = possiblePaths.Where(File.Exists);
+            return existPaths.OrderByDescending(t => File.GetLastWriteTime(t)).ToArray();
+        }
         public static string GetValidPath(string relativePath)
         {
+            Contract.Requires<ArgumentNullException>(relativePath != null);
+            Contract.Requires<ArgumentException>(relativePath.Length > 0);
+            Contract.Ensures(Contract.Result<string>() != null);
+            Contract.Ensures(Contract.Result<string>().Length > 0);
+
             var validPath = GetValidPaths(relativePath).FirstOrDefault();
-
             if (validPath == null) throw new FileNotFoundException(null, relativePath);
-
             return validPath;
-        }
-        public static IEnumerable<string> GetValidPaths(string relativePath)
-        {
-            var possiblePaths = GetPossiblePaths(relativePath).ToArray();
-
-            var existPaths = possiblePaths.Where(File.Exists);
-
-            return existPaths.OrderByDescending(t => File.GetLastWriteTime(t));
         }
 
         public static bool Exists(string relativePath)
         {
-            var possiblePaths = GetPossiblePaths(relativePath).ToArray();
+            Contract.Requires<ArgumentNullException>(relativePath != null);
+            Contract.Requires<ArgumentException>(relativePath.Length > 0);
 
+            var possiblePaths = GetPossiblePaths(relativePath);
             return possiblePaths.Any(File.Exists);
         }
 
         public static IEnumerable<string> ReadLines(string relativePath)
         {
-            var validPath = GetValidPath(relativePath);
+            Contract.Requires<ArgumentNullException>(relativePath != null);
+            Contract.Requires<ArgumentException>(relativePath.Length > 0);
 
+            var validPath = GetValidPath(relativePath);
             return File.ReadLines(validPath);
         }
         public static string[] ReadAllLines(string relativePath)
         {
-            var validPath = GetValidPath(relativePath);
+            Contract.Requires<ArgumentNullException>(relativePath != null);
+            Contract.Requires<ArgumentException>(relativePath.Length > 0);
+            Contract.Ensures(Contract.Result<string[]>() != null);
 
+            var validPath = GetValidPath(relativePath);
             return File.ReadAllLines(validPath);
         }
 
         public static string ReadAllText(string relativePath)
         {
-            var validPath = GetValidPath(relativePath);
+            Contract.Requires<ArgumentNullException>(relativePath != null);
+            Contract.Requires<ArgumentException>(relativePath.Length > 0);
+            Contract.Ensures(Contract.Result<string>() != null);
 
+            var validPath = GetValidPath(relativePath);
             return File.ReadAllText(validPath);
         }
         public static byte[] ReadAllBytes(string relativePath)
         {
-            var validPath = GetValidPath(relativePath);
+            Contract.Requires<ArgumentNullException>(relativePath != null);
+            Contract.Requires<ArgumentException>(relativePath.Length > 0);
+            Contract.Ensures(Contract.Result<byte[]>() != null);
 
+            var validPath = GetValidPath(relativePath);
             return File.ReadAllBytes(validPath);
         }
     }

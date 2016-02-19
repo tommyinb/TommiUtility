@@ -8,6 +8,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Diagnostics.Contracts;
+using System.ComponentModel;
 
 namespace TommiUtility.Windows
 {
@@ -17,10 +19,11 @@ namespace TommiUtility.Windows
 
         public static void MoveTo(Point point)
         {
-            int dx = (int)Math.Ceiling((double)point.X
-                * 65536 / (Screen.PrimaryScreen.Bounds.Width - 1));
-            int dy = (int)Math.Ceiling((double)point.Y
-                * 65536 / (Screen.PrimaryScreen.Bounds.Height - 1));
+            var screen = Screen.PrimaryScreen;
+            Contract.Assume(screen != null);
+
+            int dx = (int)Math.Ceiling((double)point.X * 65536 / (screen.Bounds.Width - 1));
+            int dy = (int)Math.Ceiling((double)point.Y * 65536 / (screen.Bounds.Height - 1));
 
             NativeMethods.MouseEvent(0x0001 | 0x8000, dx, dy, 0, UIntPtr.Zero);
         }
@@ -40,7 +43,7 @@ namespace TommiUtility.Windows
                 case MouseButton.Right:
                     MouseEvent(0x08); break;
                 default:
-                    throw new ArgumentException();
+                    throw new InvalidEnumArgumentException();
             }
         }
         public static void MouseUp(MouseButton mouseButton)
@@ -54,7 +57,7 @@ namespace TommiUtility.Windows
                 case MouseButton.Right:
                     MouseEvent(0x10); break;
                 default:
-                    throw new ArgumentException();
+                    throw new InvalidEnumArgumentException();
             }
         }
         
@@ -81,13 +84,16 @@ namespace TommiUtility.Windows
         [TestMethod]
         public void TestMoveTo()
         {
+            var screen = Screen.PrimaryScreen;
+            Contract.Assume(screen != null);
+
             for (int i = 1; i <= 5; i++)
             {
-                var x = i * Screen.PrimaryScreen.Bounds.Width / 10 - 1;
+                var x = i * screen.Bounds.Width / 10 - 1;
 
                 for (int j = 1; j <= 5; j++)
                 {
-                    var y = j * Screen.PrimaryScreen.Bounds.Height / 10 - 1;
+                    var y = j * screen.Bounds.Height / 10 - 1;
 
                     TestMoveTo(new Point(x, y));
                 }
@@ -96,8 +102,8 @@ namespace TommiUtility.Windows
             var customPoints = new[]
             {
                 new Point(0, 0), new Point(1, 1),
-                new Point(Screen.PrimaryScreen.Bounds.Width / 2, Screen.PrimaryScreen.Bounds.Height / 2),
-                new Point(Screen.PrimaryScreen.Bounds.Width - 1, Screen.PrimaryScreen.Bounds.Height - 1)
+                new Point(screen.Bounds.Width / 2, screen.Bounds.Height / 2),
+                new Point(screen.Bounds.Width - 1, screen.Bounds.Height - 1)
             };
             foreach (var point in customPoints)
             {

@@ -22,6 +22,8 @@ namespace TommiUtility
         public static T ChangeType<T>(object value)
         {
             var @object = ChangeType(value, typeof(T));
+
+            if (@object == null) return default(T);
             return (T)@object;
         }
         public static object ChangeType(object value, Type type)

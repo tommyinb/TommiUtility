@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,9 @@ namespace TommiUtility.Collections
     {
         public static void Remove<T>(this ICollection<T> collection, Func<T, bool> predicate)
         {
+            Contract.Requires<ArgumentNullException>(collection != null);
+            Contract.Requires<ArgumentNullException>(predicate != null);
+
             var items = collection.Where(predicate).ToArray();
 
             foreach (var item in items)

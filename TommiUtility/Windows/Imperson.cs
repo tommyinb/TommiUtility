@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
@@ -13,6 +14,10 @@ namespace TommiUtility.Windows
     {
         public Imperson(string domain, string user, string password)
         {
+            Contract.Requires<ArgumentException>(string.IsNullOrEmpty(domain) == false);
+            Contract.Requires<ArgumentException>(string.IsNullOrEmpty(user) == false);
+            Contract.Requires<ArgumentException>(string.IsNullOrEmpty(password) == false);
+
             bool logon = NativeMethods.LogonUser(
                 user, domain, password,
                 2, 0,

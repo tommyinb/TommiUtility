@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -14,7 +15,7 @@ namespace TommiUtility.ProgramFlow
         {
             this.args = args;
         }
-        private string[] args;
+        private readonly string[] args;
 
         private const string KeyBodyPattern = @"(?<key>[^-:=]+)(?<encode>-c|-b)?";
         private const string KeyPattern = @"^-" + KeyBodyPattern + "$";
@@ -22,24 +23,42 @@ namespace TommiUtility.ProgramFlow
 
         public bool HasKey(string key)
         {
+            Contract.Requires<ArgumentNullException>(key != null);
+
             return GetValues(key).Any();
         }
 
         public T GetValue<T>(string key)
         {
+            Contract.Requires<ArgumentNullException>(key != null);
+
             return GetValues<T>(key).FirstOrDefault();
         }
         public IEnumerable<T> GetValues<T>(string key)
         {
-            return GetValues(key).Select(t => (T)Convert.ChangeType(t, typeof(T)));
+            Contract.Requires<ArgumentNullException>(key != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
+
+            return GetValues(key).Select(t =>
+            {
+                var value = Convert.ChangeType(t, typeof(T));
+                
+                if (value == null) return default(T);
+                return (T)value;
+            });
         }
 
         public string GetValue(string key)
         {
+            Contract.Requires<ArgumentNullException>(key != null);
+
             return GetValues(key).FirstOrDefault();
         }
         public IEnumerable<string> GetValues(string key)
         {
+            Contract.Requires<ArgumentNullException>(key != null);
+            Contract.Ensures(Contract.Result<IEnumerable<string>>() != null);
+
             for (int i = 0; i < args.Length; i++)
             {
                 var arg = args[i];
@@ -71,6 +90,9 @@ namespace TommiUtility.ProgramFlow
 
         private string Decode(string text, string encode)
         {
+            Contract.Requires<ArgumentNullException>(text != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
             switch (encode)
             {
                 case "-c":

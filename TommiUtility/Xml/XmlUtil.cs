@@ -17,6 +17,9 @@ namespace TommiUtility.Xml
     {
         public static string Serialize<T>(T @object)
         {
+            Contract.Requires<ArgumentNullException>(@object != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
             var serializer = new XmlSerializer(typeof(T));
 
             using (var stringWriter = new StringWriter())
@@ -47,12 +50,15 @@ namespace TommiUtility.Xml
             {
                 var @object = serializer.Deserialize(reader);
 
+                if (@object == null) return default(T);
+
                 return (T)@object;
             }
         }
 
         public static void WriteFile<T>(T @object, string filePath)
         {
+            Contract.Requires<ArgumentNullException>(@object != null);
             Contract.Requires<ArgumentNullException>(filePath != null);
 
             var xml = Serialize(@object);
@@ -62,6 +68,7 @@ namespace TommiUtility.Xml
         public static T ReadFile<T>(string filePath)
         {
             Contract.Requires<ArgumentNullException>(filePath != null);
+            Contract.Requires<ArgumentException>(filePath.Length > 0);
 
             var xml = File.ReadAllText(filePath);
 
@@ -71,7 +78,9 @@ namespace TommiUtility.Xml
         public static XmlElement AddElement(this XmlNode node, string name)
         {
             Contract.Requires<ArgumentNullException>(node != null);
+            Contract.Requires<ArgumentNullException>(node.OwnerDocument != null);
             Contract.Requires<ArgumentNullException>(name != null);
+            Contract.Ensures(Contract.Result<XmlElement>() != null);
 
             var element = node.OwnerDocument.CreateElement(name);
 
@@ -82,8 +91,10 @@ namespace TommiUtility.Xml
         public static XmlElement AddElement(this XmlNode node, string name, string value)
         {
             Contract.Requires<ArgumentNullException>(node != null);
+            Contract.Requires<ArgumentException>(node.OwnerDocument != null);
             Contract.Requires<ArgumentNullException>(name != null);
             Contract.Requires<ArgumentNullException>(value != null);
+            Contract.Ensures(Contract.Result<XmlElement>() != null);
 
             var element = node.OwnerDocument.CreateElement(name);
             element.InnerText = value;
@@ -96,6 +107,7 @@ namespace TommiUtility.Xml
         public static string GetIndentedXml(this XmlDocument xmlDocument)
         {
             Contract.Requires<NullReferenceException>(xmlDocument != null);
+            Contract.Ensures(Contract.Result<string>() != null);
 
             var stringBuilder = new StringBuilder();
             
@@ -122,12 +134,11 @@ namespace TommiUtility.Xml
             var tester = new[] { Box.Create("123"), Box.Create("234") };
 
             var xml = XmlUtil.Serialize(tester);
-
             var testee = XmlUtil.Deserialize<Box<string>[]>(xml);
-
-            Assert.AreEqual(tester.Length, testee.Length);
-            Assert.AreEqual(tester.First().Item, testee.First().Item);
-            Assert.AreEqual(tester.Last().Item, testee.Last().Item);
+            
+            Assert.IsNotNull(testee);
+            Contract.Assume(testee != null);
+            AssertUtil.SequenceEqual(tester, testee, (x, y) => x.Item == y.Item);
         }
 
         [TestMethod]
@@ -141,6 +152,9 @@ namespace TommiUtility.Xml
 
             File.Delete("test.xml");
 
+            Assert.IsNotNull(testee);
+            Contract.Assume(testee != null);
+
             Assert.AreEqual(tester.Item1, testee.Item1);
             Assert.AreEqual(tester.Item2, testee.Item2);
         }
@@ -151,11 +165,22 @@ namespace TommiUtility.Xml
             var document = new XmlDocument();
             document.LoadXml("<document></document>");
 
-            document.DocumentElement.AddElement("abc", "123");
-            Assert.IsTrue(document.DocumentElement["abc"].InnerText == "123");
+            var documentElement = document.DocumentElement;
+            Contract.Assume(documentElement != null);
+            
+            Contract.Assume(documentElement.OwnerDocument != null);
+            documentElement.AddElement("abc", "123");
+            
+            var abcNode = document.DocumentElement["abc"];
+            Assert.IsNotNull(abcNode);
+            Contract.Assume(abcNode != null);
+            Assert.AreEqual("123", abcNode.InnerText);
 
-            document.DocumentElement.AddElement("xyz");
-            Assert.IsNotNull(document.DocumentElement["xyz"]);
+            Contract.Assume(documentElement.OwnerDocument != null);
+            documentElement.AddElement("xyz");
+
+            var xyzNode = document.DocumentElement["xyz"];
+            Assert.IsNotNull(xyzNode);
         }
 
         [TestMethod]
