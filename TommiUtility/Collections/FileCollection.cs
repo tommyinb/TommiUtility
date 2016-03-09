@@ -13,7 +13,7 @@ using TommiUtility.Test;
 
 namespace TommiUtility.Collections
 {
-    public class FileCollection<T> : ObservableCollection<T>
+    public sealed class FileCollection<T> : ObservableCollection<T>
     {
         public FileCollection(string filePath)
         {

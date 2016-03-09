@@ -22,20 +22,19 @@ namespace TommiUtility.Xml
 
             var serializer = new XmlSerializer(typeof(T));
 
-            using (var stringWriter = new StringWriter())
+            var stringWriter = new StringWriter();
+            var xmlSettings = new XmlWriterSettings
             {
-                var xmlSettings = new XmlWriterSettings
-                {
-                    OmitXmlDeclaration = true,
-                    Indent = true
-                };
-                using (var xmlWriter = XmlWriter.Create(stringWriter, xmlSettings))
-                {
-                    var xmlNamespaces = new XmlSerializerNamespaces();
-                    xmlNamespaces.Add(string.Empty, string.Empty);
+                OmitXmlDeclaration = true,
+                Indent = true,
+                CloseOutput = true
+            };
+            using (var xmlWriter = XmlWriter.Create(stringWriter, xmlSettings))
+            {
+                var xmlNamespaces = new XmlSerializerNamespaces();
+                xmlNamespaces.Add(string.Empty, string.Empty);
 
-                    serializer.Serialize(xmlWriter, @object, xmlNamespaces);
-                }
+                serializer.Serialize(xmlWriter, @object, xmlNamespaces);
 
                 return stringWriter.ToString();
             }

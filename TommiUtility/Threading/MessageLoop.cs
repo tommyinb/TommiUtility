@@ -111,7 +111,7 @@ namespace TommiUtility.Threading
         }
     }
 
-    public class MessageLoopInvoke : IAsyncResult
+    public sealed class MessageLoopInvoke : IAsyncResult, IDisposable
     {
         public MessageLoopInvoke(Delegate method, object[] args)
         {
@@ -125,6 +125,10 @@ namespace TommiUtility.Threading
             Args = args;
 
             WaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
+        }
+        public void Dispose()
+        {
+            WaitHandle.Dispose();
         }
 
         public readonly Delegate Method;
