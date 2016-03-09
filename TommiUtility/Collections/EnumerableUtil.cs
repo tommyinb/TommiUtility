@@ -147,6 +147,21 @@ namespace TommiUtility.Collections
             }
         }
 
+        public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int count)
+        {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
+
+            return source.Reverse().Take(count).Reverse();
+        }
+        public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count)
+        {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
+
+            return source.Reverse().Skip(count).Reverse();
+        }
+
         public static TimeSpan Sum<T>(this IEnumerable<T> source, Func<T, TimeSpan> selector)
         {
             Contract.Requires<ArgumentNullException>(source != null);
@@ -177,6 +192,35 @@ namespace TommiUtility.Collections
                 }
 
                 items = items.SelectMany(floodSelector);
+            }
+        }
+
+        public static IEnumerable<T> For<T>(T start, Func<T, bool> condition, Func<T, T> increment)
+        {
+            Contract.Requires<ArgumentNullException>(condition != null);
+            Contract.Requires<ArgumentNullException>(increment != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
+
+            for (var value = start; condition(value); value = increment(value))
+            {
+                yield return value;
+            }
+        }
+        public static IEnumerable<T> Infinite<T>(T start, Func<T, T> increment)
+        {
+            Contract.Requires<ArgumentNullException>(increment != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
+            Contract.Ensures(Contract.Result<IEnumerable<T>>().Count() > 0);
+
+            var value = start;
+
+            yield return value;
+
+            while (true)
+            {
+                value = increment(value);
+
+                yield return value;
             }
         }
     }
@@ -283,12 +327,37 @@ namespace TommiUtility.Collections
         public void TestJoin()
         {
             var abc = new[] { 'a', 'b', 'c' };
-
-            Assert.IsTrue(new[] { 'a', 'k', 'b', 'k', 'c' }.SequenceEqual(abc.Join('k')));
+            AssertUtil.SequenceEqual(abc.Join('k'), new[] { 'a', 'k', 'b', 'k', 'c' });
 
             var seperator = 'p';
             var seperatorFunc = new Func<char>(() => seperator++);
-            Assert.IsTrue(new[] { 'a', 'p', 'b', 'q', 'c' }.SequenceEqual(abc.Join(seperatorFunc)));
+            AssertUtil.SequenceEqual(abc.Join(seperatorFunc), new[] { 'a', 'p', 'b', 'q', 'c' });
+        }
+
+        [TestMethod]
+        public void TestTakeLast()
+        {
+            var abc = new[] { 1, 2, 3 };
+
+            AssertUtil.SequenceEqual(new int[0], abc.TakeLast(-1));
+            AssertUtil.SequenceEqual(new int[0], abc.TakeLast(0));
+            AssertUtil.SequenceEqual(new[] { 3 }, abc.TakeLast(1));
+            AssertUtil.SequenceEqual(new[] { 2, 3 }, abc.TakeLast(2));
+            AssertUtil.SequenceEqual(new[] { 1, 2, 3 }, abc.TakeLast(3));
+            AssertUtil.SequenceEqual(new[] { 1, 2, 3 }, abc.TakeLast(4));
+        }
+
+        [TestMethod]
+        public void TestSkipLast()
+        {
+            var abc = new[] { 1, 2, 3 };
+
+            AssertUtil.SequenceEqual(new[] { 1, 2, 3 }, abc.SkipLast(-1));
+            AssertUtil.SequenceEqual(new[] { 1, 2, 3 }, abc.SkipLast(0));
+            AssertUtil.SequenceEqual(new[] { 1, 2 }, abc.SkipLast(1));
+            AssertUtil.SequenceEqual(new[] { 1 }, abc.SkipLast(2));
+            AssertUtil.SequenceEqual(new int[0], abc.SkipLast(3));
+            AssertUtil.SequenceEqual(new int[0], abc.SkipLast(4));
         }
 
         [TestMethod]
@@ -333,6 +402,31 @@ namespace TommiUtility.Collections
                 "1", "23", "45", "67", "A", "B", "C", "D",
                 "2", "3", "4", "5", "6", "7"
             }, flood);
+        }
+
+        [TestMethod]
+        public void TestFor()
+        {
+            var numbers = EnumerableUtil.For(0, i => i < 5, i => i + 1).ToArray();
+            AssertUtil.SequenceEqual(new[] { 0, 1, 2, 3, 4 }, numbers);
+
+            var texts = EnumerableUtil.For("A",
+                t => t.Length <= 3,
+                t => t + (char)(t.Last() + 1)).ToArray();
+            AssertUtil.SequenceEqual(new[] { "A", "AB", "ABC" }, texts);
+        }
+
+        [TestMethod]
+        public void TestInfinite()
+        {
+            var infinite = EnumerableUtil.Infinite(0, i => i + 2);
+            var resultValues = infinite.Take(100).ToArray();
+
+            var expectedValues = Enumerable.Range(0, 100).Select(i => i * 2);
+            AssertUtil.SequenceEqual(expectedValues, resultValues);
+
+            var firstHundred = infinite.First(t => t >= 100);
+            Assert.AreEqual(100, firstHundred);
         }
     }
 }
