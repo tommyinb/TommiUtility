@@ -135,6 +135,7 @@
     <Compile Include="FileSystem\StreamUtil.cs" />
     <Compile Include="ImageProcessing\RedGreenTransparency.cs" />
     <Compile Include="Logging\LogWriter.cs" />
+    <Compile Include="ProgramFlow\AttachConsole.cs" />
     <Compile Include="ProgramFlow\LazyUtil.cs" />
     <Compile Include="Logging\DailyLogger.cs" />
     <Compile Include="Mathematics\AlphabetNumeral.cs" />
@@ -173,6 +174,7 @@
     <Compile Include="Web\SimpleServer.cs" />
     <Compile Include="Web\SoapClient.cs" />
     <Compile Include="Windows\ArgumentReader.cs" />
+    <Compile Include="Windows\AttachConsole.cs" />
     <Compile Include="Windows\Imperson.cs" />
     <Compile Include="Windows\Keyboard.cs" />
     <Compile Include="Windows\KeyboardHook.cs" />
@@ -182,8 +184,10 @@
     <Compile Include="Windows\Shortcut.cs" />
     <Compile Include="Windows\Window.cs" />
     <Compile Include="Winform\ArgumentReader.cs" />
+    <Compile Include="Winform\AttachConsole.cs" />
     <Compile Include="Winform\ControlUtil.cs" />
     <Compile Include="Wpf\ArgumentReader.cs" />
+    <Compile Include="Wpf\AttachConsole.cs" />
     <Compile Include="Wpf\DependencyPropertyRegister.cs" />
     <Compile Include="Wpf\EnumBooleanConverter.cs" />
     <Compile Include="Wpf\InverseBooleanConverter.cs" />
