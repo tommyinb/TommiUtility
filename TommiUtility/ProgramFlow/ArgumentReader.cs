@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TommiUtility.Test;
 
 namespace TommiUtility.ProgramFlow
 {
@@ -13,6 +14,9 @@ namespace TommiUtility.ProgramFlow
     {
         public ArgumentReader(string[] args)
         {
+            Contract.Requires<ArgumentNullException>(args != null);
+            Contract.Requires<ArgumentException>(Contract.ForAll(0, args.Length, i => args[i] != null));
+
             this.args = args;
         }
         private readonly string[] args;
@@ -63,10 +67,10 @@ namespace TommiUtility.ProgramFlow
             {
                 var arg = args[i];
 
-                if (i + 1 < args.Length)
+                var keyMatch = Regex.Match(arg, KeyPattern, RegexOptions.Singleline);
+                if (keyMatch.Success && keyMatch.Groups["key"].Value == key)
                 {
-                    var keyMatch = Regex.Match(arg, KeyPattern, RegexOptions.Singleline);
-                    if (keyMatch.Success && keyMatch.Groups["key"].Value == key)
+                    if (i + 1 < args.Length)
                     {
                         var encode = keyMatch.Groups["encode"].Value;
                         var text = args[i + 1];
@@ -75,15 +79,22 @@ namespace TommiUtility.ProgramFlow
                         i += 1;
                         continue;
                     }
+                    else
+                    {
+                        yield return string.Empty;
+                        continue;
+                    }
                 }
-
-                var pairMatch = Regex.Match(arg, PairPattern, RegexOptions.Singleline);
-                if (pairMatch.Success && pairMatch.Groups["key"].Value == key)
+                else
                 {
-                    var encode = pairMatch.Groups["encode"].Value;
-                    var text = pairMatch.Groups["value"].Value;
-                    yield return Decode(text, encode);
-                    continue;
+                    var pairMatch = Regex.Match(arg, PairPattern, RegexOptions.Singleline);
+                    if (pairMatch.Success && pairMatch.Groups["key"].Value == key)
+                    {
+                        var encode = pairMatch.Groups["encode"].Value;
+                        var text = pairMatch.Groups["value"].Value;
+                        yield return Decode(text, encode);
+                        continue;
+                    }
                 }
             }
         }
@@ -121,25 +132,36 @@ namespace TommiUtility.ProgramFlow
                 "-abc=345",
                 "abc=456",
 
-                "-bcd", "kkk",
+                "-bcd", "ppp",
                 @"-bcd-c:\\",
-                @"-bcd-b:YWJj"
+                @"-bcd-b:YWJj",
+
+                "-cde",
+                "-def", "kkk",
+                "-def"
             });
 
             Assert.IsTrue(reader.HasKey("abc"));
-            Assert.IsTrue(reader.HasKey("bcd"));
-            Assert.IsFalse(reader.HasKey("cde"));
-
             Assert.AreEqual(123, reader.GetValue<int>("abc"));
             Assert.AreEqual("123", reader.GetValue("abc"));
-            
             var abcs = reader.GetValues<int>("abc");
-            Assert.IsTrue(new[] { 123, 234, 345, 456 }.SequenceEqual(abcs));
+            AssertUtil.SequenceEqual(new[] { 123, 234, 345, 456 }, abcs);
 
+            Assert.IsTrue(reader.HasKey("bcd"));
             var bcds = reader.GetValues("bcd");
-            Assert.IsTrue(new[] { "kkk", @"\", "abc" }.SequenceEqual(bcds));
+            AssertUtil.SequenceEqual(new[] { "ppp", @"\", "abc" }, bcds);
 
-            Assert.IsNull(reader.GetValue("cde"));
+            Assert.IsTrue(reader.HasKey("cde"));
+            Assert.AreEqual("-def", reader.GetValue("cde"));
+            var cdes = reader.GetValues("cde");
+            AssertUtil.SequenceEqual(new string[] { "-def" }, cdes);
+
+            Assert.IsTrue(reader.HasKey("def"));
+            var defs = reader.GetValues("def");
+            AssertUtil.SequenceEqual(new string[] { "kkk", string.Empty }, defs);
+
+            Assert.IsFalse(reader.HasKey("xyz"));
+            Assert.IsNull(reader.GetValue("xyz"));
         }
     }
 }
