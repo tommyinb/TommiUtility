@@ -18,20 +18,16 @@ namespace TommiUtility.Web
         {
             Contract.Requires<ArgumentNullException>(cookieContainer != null);
             Contract.Ensures(Contract.Result<IEnumerable<Cookie>>() != null);
-            Contract.Ensures(Contract.ForAll(Contract.Result<IEnumerable<Cookie>>(), t => t != null));
 
             var lists = GetCookieLists(cookieContainer);
             var cookieCollections = lists.SelectMany(t => t.Values.OfType<CookieCollection>());
-            var cookies = cookieCollections.SelectMany(t => t.OfType<Cookie>());
-
-            Contract.Assume(Contract.ForAll(cookies, t => t != null));
-            return cookies;
+            return cookieCollections.SelectMany(t => t.OfType<Cookie>());
         }
 
         private static IEnumerable<IDictionary> GetCookieLists(CookieContainer cookieContainer)
         {
             Contract.Requires<ArgumentNullException>(cookieContainer != null);
-            Contract.Ensures(Contract.ForAll(Contract.Result<IEnumerable<IDictionary>>(), t => t != null));
+            Contract.Ensures(Contract.Result<IEnumerable<IDictionary>>() != null);
 
             var containerFields = cookieContainer.GetType().GetRuntimeFields();
             Contract.Assume(containerFields != null);
@@ -40,7 +36,7 @@ namespace TommiUtility.Web
             var domainTable = (IDictionary)domainTableField.GetValue(cookieContainer);
             Contract.Assume(domainTable != null);
 
-            var cookiesLists = domainTable.Values.OfType<object>().Select(domain =>
+            return domainTable.Values.OfType<object>().Select(domain =>
             {
                 var domainFields = domain.GetType().GetRuntimeFields();
                 Contract.Assume(domainFields != null);
@@ -48,10 +44,7 @@ namespace TommiUtility.Web
 
                 var listField = domainFields.First(x => x.Name == "m_list");
                 return (IDictionary)listField.GetValue(domain);
-            }).Where(t => t != null).ToArray();
-
-            Contract.Assume(Contract.ForAll(cookiesLists, t => t != null));
-            return cookiesLists;
+            });
         }
 
         public static void RemoveCookie(this CookieContainer cookieContainer, string name)
@@ -62,6 +55,8 @@ namespace TommiUtility.Web
             var lists = GetCookieLists(cookieContainer);
             foreach (var list in lists)
             {
+                Contract.Assume(list != null);
+
                 var keys = list.Keys.Cast<object>().ToArray();
                 foreach (var key in keys)
                 {

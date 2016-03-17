@@ -107,11 +107,10 @@ namespace TommiUtility.Collections
         public static IEnumerable<T> Concat<T>(params IEnumerable<T>[] sources)
         {
             Contract.Requires<ArgumentNullException>(sources != null);
-            Contract.Requires<ArgumentException>(Contract.ForAll(0, sources.Length, i => sources[i] != null));
             Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
 
             var result = sources.Aggregate((IEnumerable<T>)new T[0],
-                (total, curr) => total.Concat(curr));
+                (total, curr) => total.Concat(curr ?? new T[0]));
             
             Contract.Assume(result != null);
             return result;
@@ -210,16 +209,13 @@ namespace TommiUtility.Collections
         {
             Contract.Requires<ArgumentNullException>(increment != null);
             Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
-            Contract.Ensures(Contract.Result<IEnumerable<T>>().Count() > 0);
+
+            yield return start;
 
             var value = start;
-
-            yield return value;
-
             while (true)
             {
                 value = increment(value);
-
                 yield return value;
             }
         }
@@ -425,6 +421,7 @@ namespace TommiUtility.Collections
             var expectedValues = Enumerable.Range(0, 100).Select(i => i * 2);
             AssertUtil.SequenceEqual(expectedValues, resultValues);
 
+            Contract.Assume(infinite.Count() > 0);
             var firstHundred = infinite.First(t => t >= 100);
             Assert.AreEqual(100, firstHundred);
         }

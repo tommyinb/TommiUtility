@@ -10,6 +10,7 @@ namespace TommiUtility.Windows
 {
     public static class Shortcut
     {
+        [ContractVerification(false)]
         public static void Create(string shortcutPath, string targetPath)
         {
             Contract.Requires<ArgumentNullException>(shortcutPath != null);

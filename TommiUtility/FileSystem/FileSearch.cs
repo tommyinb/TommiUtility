@@ -16,18 +16,20 @@ namespace TommiUtility.FileSystem
         public static FileSearch Create(params string[] paths)
         {
             Contract.Requires<ArgumentNullException>(paths != null);
-            Contract.Requires<ArgumentException>(paths.Length >= 1);
-            Contract.Requires<ArgumentException>(Contract.ForAll(0, paths.Length, i => paths[i] != null));
             Contract.Ensures(Contract.Result<FileSearch>() != null);
 
-            if (paths.Length == 1)
+            var validPaths = paths.Where(t => string.IsNullOrEmpty(t) == false).ToArray();
+            if (validPaths.Length == 1)
             {
-                var path = paths[0];
+                var path = validPaths[0];
+                Contract.Assume(path != null);
+                Contract.Assume(path.Length > 0);
+
                 return new RootFileSearch(path);
             }
             else
             {
-                var rootSearches = paths.Select(t => new RootFileSearch(t)).ToArray();
+                var rootSearches = validPaths.Select(t => new RootFileSearch(t)).ToArray();
                 Contract.Assume(Contract.ForAll(0, rootSearches.Length, i => rootSearches[i] != null));
 
                 return new CombineFileSearch(rootSearches);
@@ -48,7 +50,7 @@ namespace TommiUtility.FileSystem
             Contract.Ensures(Contract.Result<FileSearch>() != null);
 
             var subSearches = patterns.Select(t => new SubFileSearch(this, t, searchOption)).ToArray();
-            Contract.Assume(Contract.ForAll(subSearches, t => t != null));
+            Contract.Assume(Contract.ForAll(0, subSearches.Length, i => subSearches[i] != null));
 
             return new CombineFileSearch(subSearches);
         }

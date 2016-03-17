@@ -11,6 +11,7 @@ namespace iPanel.Utility
 {
     public static class DbContextUtil
     {
+        [ContractVerification(false)]
         public static void RefillById<T>(this DbContext db, Expression<Func<T>> expression)
         {
             Contract.Requires<ArgumentNullException>(db != null);
@@ -40,11 +41,9 @@ namespace iPanel.Utility
             if (dbSetProperty == null) throw new ArgumentException();
 
             dynamic dbSet = dbSetProperty.GetValue(db);
-
             dynamic item = propertyInfo.GetValue(model);
 
             var dbItem = dbSet.Find(item.Id);
-
             propertyInfo.SetValue(model, dbItem);
         }
     }

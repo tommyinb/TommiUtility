@@ -82,14 +82,13 @@ namespace TommiUtility.MicrosoftOffice
             }
         }
 
+        [ContractVerification(false)]
         public ExcelSheet GetSheet(string sheetName, bool createIfAbsent = false)
         {
             Contract.Requires<ArgumentNullException>(sheetName != null);
             Contract.Requires<ArgumentException>(sheetName.Length > 0);
             Contract.Ensures(Contract.Result<ExcelSheet>() != null);
 
-            Contract.Assume(excel.ActiveWorkbook != null);
-            Contract.Assume(excel.ActiveWorkbook.Worksheets != null);
             var worksheets = excel.ActiveWorkbook.Worksheets.OfType<Worksheet>();
             var worksheet = worksheets.FirstOrDefault(t => t.Name == sheetName);
 
@@ -98,13 +97,9 @@ namespace TommiUtility.MicrosoftOffice
                 if (createIfAbsent == false) throw new ArgumentException();
 
                 worksheet = excel.ActiveWorkbook.Worksheets.Add();
-                Contract.Assume(worksheet != null);
-
                 worksheet.Name = sheetName;
             }
 
-            Contract.Assume(excel.Workbooks != null);
-            Contract.Assume(worksheet.Cells != null);
             return new ExcelSheet(this, worksheet);
         }
     }
@@ -131,6 +126,7 @@ namespace TommiUtility.MicrosoftOffice
             Contract.Invariant(Sheet.Cells != null);
         }
 
+        [ContractVerification(false)]
         public object this[int row, string column]
         {
             get

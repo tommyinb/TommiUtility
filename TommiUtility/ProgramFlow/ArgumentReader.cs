@@ -15,7 +15,6 @@ namespace TommiUtility.ProgramFlow
         public ArgumentReader(string[] args)
         {
             Contract.Requires<ArgumentNullException>(args != null);
-            Contract.Requires<ArgumentException>(Contract.ForAll(0, args.Length, i => args[i] != null));
 
             this.args = args;
         }
@@ -66,6 +65,7 @@ namespace TommiUtility.ProgramFlow
             for (int i = 0; i < args.Length; i++)
             {
                 var arg = args[i];
+                if (arg == null) continue;
 
                 var keyMatch = Regex.Match(arg, KeyPattern, RegexOptions.Singleline);
                 if (keyMatch.Success && keyMatch.Groups["key"].Value == key)
