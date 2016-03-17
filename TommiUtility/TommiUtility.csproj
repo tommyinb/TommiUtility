@@ -186,6 +186,7 @@
     <Compile Include="Winform\ArgumentReader.cs" />
     <Compile Include="Winform\AttachConsole.cs" />
     <Compile Include="Winform\ControlUtil.cs" />
+    <Compile Include="Winform\EventArgs.cs" />
     <Compile Include="Wpf\ArgumentReader.cs" />
     <Compile Include="Wpf\AttachConsole.cs" />
     <Compile Include="Wpf\DependencyPropertyRegister.cs" />
