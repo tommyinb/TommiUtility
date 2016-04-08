@@ -116,6 +116,29 @@ namespace TommiUtility.Collections
             return result;
         }
 
+        public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> source, T seperator)
+        {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Ensures(Contract.Result<IEnumerable<IEnumerable<T>>>() != null);
+
+            var group = new List<T>();
+
+            foreach (var item in source)
+            {
+                if (Equals(item, seperator))
+                {
+                    yield return group;
+
+                    group = new List<T>();
+                }
+                else
+                {
+                    group.Add(item);
+                }
+            }
+
+            yield return group;
+        }
         public static IEnumerable<T> Join<T>(this IEnumerable<T> source, T seperator)
         {
             Contract.Requires<ArgumentNullException>(source != null);
@@ -317,6 +340,24 @@ namespace TommiUtility.Collections
             var text = string.Join(string.Empty, result);
 
             Assert.AreEqual("abcdefghi", text);
+        }
+
+        [TestMethod]
+        public void TestSplit()
+        {
+            var source = new[] { 1, 2, 0, 3, 4, 5, 0, 7 };
+
+            var result1 = source.Split(0);
+            var expected1 = new[] { new[] { 1, 2 }, new[] { 3, 4, 5 }, new[] { 7 } };
+            AssertUtil.SequenceEqual(expected1, result1, (x, y) => x.SequenceEqual(y));
+
+            var result2 = source.Split(1);
+            var expected2 = new[] { new int[0], new[] { 2, 0, 3, 4, 5, 0, 7 } };
+            AssertUtil.SequenceEqual(result2, expected2, (x, y) => x.SequenceEqual(y));
+
+            var result3 = source.Split(7);
+            var expected3 = new[] { new[] { 1, 2, 0, 3, 4, 5, 0 }, new int[0] }; 
+            AssertUtil.SequenceEqual(result3, expected3, (x, y) => x.SequenceEqual(y));
         }
 
         [TestMethod]
