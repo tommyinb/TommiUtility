@@ -18,6 +18,10 @@ namespace TommiUtility
 
             return objects.Any(t => @object.Equals(t));
         }
+        public static bool EqualsDefault<T>(this T @object) where T : struct
+        {
+            return @object.Equals(default(T));
+        }
 
         public static T ChangeType<T>(object value)
         {
@@ -69,6 +73,20 @@ namespace TommiUtility
 
             Assert.IsFalse("X".EqualsAny());
             Assert.IsFalse("X".EqualsAny(new object[0]));
+        }
+
+        [TestMethod]
+        public void TestEqualDefault()
+        {
+            Assert.IsTrue(((uint)0).EqualsDefault());
+            Assert.IsTrue(((float)0).EqualsDefault());
+            Assert.IsTrue(((double)0).EqualsDefault());
+            Assert.IsTrue(((char)0).EqualsDefault());
+
+            Assert.IsFalse(((uint)1).EqualsDefault());
+            Assert.IsFalse(((float)1).EqualsDefault());
+            Assert.IsFalse(((double)1).EqualsDefault());
+            Assert.IsFalse(((char)1).EqualsDefault());
         }
 
         [TestMethod]
