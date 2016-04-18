@@ -24,7 +24,7 @@ namespace TommiUtility.Collections
                     Contract.Assume(list.Count <= int.MaxValue);
 
                     var matchIndex = Enumerable.Range(index, list.Count - index)
-                        .Where(t => object.Equals(list[t], item))
+                        .Where(t => Equals(list[t], item))
                         .Select(t => new int?(t)).FirstOrDefault();
 
                     if (matchIndex != null)
@@ -67,7 +67,7 @@ namespace TommiUtility.Collections
                     Contract.Assume(list.Count <= int.MaxValue);
 
                     var matchIndex = Enumerable.Range(index, list.Count - index)
-                        .Where(t => object.Equals(list[t], item))
+                        .Where(t => Equals(list[t], item))
                         .Select(t => new int?(t)).FirstOrDefault();
 
                     if (matchIndex != null)

@@ -56,8 +56,8 @@ namespace TommiUtility.Mathematics
 
             var range = (Range<T>)obj;
 
-            return object.Equals(range.From, From)
-                && object.Equals(range.To, To);
+            return Equals(range.From, From)
+                && Equals(range.To, To);
         }
         public override int GetHashCode()
         {

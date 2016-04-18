@@ -109,7 +109,7 @@ namespace TommiUtility.Delegates
                 {
                     var input = (MethodCacheInput)obj;
 
-                    return object.Equals(Delegate, input.Delegate)
+                    return Equals(Delegate, input.Delegate)
                         && input.Parameters != null
                         && Parameters.SequenceEqual(input.Parameters);
                 }

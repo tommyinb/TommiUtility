@@ -53,7 +53,7 @@ namespace TommiUtility.Binding
 
             var oldValue = values.ContainsKey(propertyName) ? values[propertyName] : default(T);
             
-            if (object.Equals(oldValue, value))
+            if (Equals(oldValue, value))
             {
                 return;
             }
