@@ -133,6 +133,7 @@
     <Compile Include="FileSystem\PathComparator.cs" />
     <Compile Include="FileSystem\ProjectFile.cs" />
     <Compile Include="FileSystem\StreamUtil.cs" />
+    <Compile Include="ImageProcessing\IntegerMap.cs" />
     <Compile Include="ImageProcessing\RedGreenTransparency.cs" />
     <Compile Include="Logging\LogWriter.cs" />
     <Compile Include="ProgramFlow\AttachConsole.cs" />
