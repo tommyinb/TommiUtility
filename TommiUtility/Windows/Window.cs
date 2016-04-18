@@ -54,6 +54,16 @@ namespace TommiUtility.Windows
             }
         }
         
+        public static Rectangle GetRectangle(IntPtr windowHandle)
+        {
+            var rect = new NativeMethods.Rect();
+
+            var getWindowRect = NativeMethods.GetWindowRect(windowHandle, ref rect);
+            if (getWindowRect == false) throw new InvalidOperationException();
+
+            return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left + 1, rect.Bottom - rect.Top + 1);
+        }
+
         public static bool SetRectangle(IntPtr windowHandle, Rectangle rectangle)
         {
             Contract.Requires<ArgumentException>(windowHandle != IntPtr.Zero);
@@ -75,6 +85,17 @@ namespace TommiUtility.Windows
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         internal static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+
+        [DllImport("user32.dll")]
+        public static extern bool GetWindowRect(IntPtr hWnd, ref Rect rect);
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Rect
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
 
         [DllImport("user32.dll")]
         internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
