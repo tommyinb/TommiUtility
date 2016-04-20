@@ -242,6 +242,30 @@ namespace TommiUtility.Collections
                 yield return value;
             }
         }
+
+        public static IEnumerable<T[]> Combinations<T>(params IEnumerable<T>[] possibleValues)
+        {
+            Contract.Requires<ArgumentNullException>(possibleValues != null);
+            Contract.Requires<ArgumentNullException>(Contract.ForAll(0, possibleValues.Length, i => possibleValues[i] != null));
+            Contract.Ensures(Contract.Result<IEnumerable<T[]>>() != null);
+
+            var enumerators = possibleValues.Select(t => t.GetEnumerator()).ToArray();
+            if (enumerators.All(t => t.MoveNext()) == false) yield break;
+
+            while (true)
+            {
+                yield return enumerators.Select(t => t.Current).ToArray();
+
+                var resetEnumerators = enumerators.TakeWhile(t => t.MoveNext() == false).ToArray();
+                foreach (var resetEnumerator in resetEnumerators)
+                {
+                    resetEnumerator.Reset();
+                    resetEnumerator.MoveNext();
+                }
+
+                if (resetEnumerators.Length >= enumerators.Length) break;
+            }
+        }
     }
 
     [TestClass]
