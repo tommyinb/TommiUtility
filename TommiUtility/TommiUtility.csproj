@@ -116,6 +116,7 @@
     <Compile Include="Box.cs" />
     <Compile Include="Collections\ArrayUtil.cs" />
     <Compile Include="Collections\CollectionUtil.cs" />
+    <Compile Include="Collections\EnumerableEqualityComparer.cs" />
     <Compile Include="Collections\FileCollection.cs" />
     <Compile Include="Collections\ListUtil.cs" />
     <Compile Include="Delegates\ActionUtil.cs" />
