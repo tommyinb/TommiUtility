@@ -109,11 +109,7 @@ namespace TommiUtility.Collections
             Contract.Requires<ArgumentNullException>(sources != null);
             Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
 
-            var result = sources.Aggregate((IEnumerable<T>)new T[0],
-                (total, curr) => total.Concat(curr ?? new T[0]));
-            
-            Contract.Assume(result != null);
-            return result;
+            return sources.SelectMany(t => t ?? new T[0]);
         }
 
         public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> source, T seperator)
