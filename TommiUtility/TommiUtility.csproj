@@ -177,6 +177,8 @@
     <Compile Include="Web\SoapClient.cs" />
     <Compile Include="Windows\ArgumentReader.cs" />
     <Compile Include="Windows\AttachConsole.cs" />
+    <Compile Include="Windows\FileCommand.cs" />
+    <Compile Include="Windows\ConsoleHighlight.cs" />
     <Compile Include="Windows\Imperson.cs" />
     <Compile Include="Windows\Keyboard.cs" />
     <Compile Include="Windows\KeyboardHook.cs" />
