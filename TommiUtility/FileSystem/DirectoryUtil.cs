@@ -34,11 +34,11 @@ namespace TommiUtility.FileSystem
             var validFiles = fromFiles.Where(filter).ToArray();
             foreach (var fromFile in validFiles)
             {
-                Contract.Assume(fromFile != null);
-                Contract.Assume(fromFile.Length > 0);
-
+                Contract.Assume(string.IsNullOrEmpty(fromFile) == false);
                 var fileName = Path.GetFileName(fromFile);
+                Contract.Assume(fileName != null);
                 var toFile = Path.Combine(toPath, fileName);
+
                 File.Copy(fromFile, toFile, overwrite: true);
             }
 

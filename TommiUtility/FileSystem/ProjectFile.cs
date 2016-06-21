@@ -20,15 +20,15 @@ namespace TommiUtility.FileSystem
             yield return relativePath;
             yield return Path.Combine(@"..\..", relativePath);
         }
-        public static string[] GetValidPaths(string relativePath)
+        public static IEnumerable<string> GetValidPaths(string relativePath)
         {
             Contract.Requires<ArgumentNullException>(relativePath != null);
             Contract.Requires<ArgumentException>(relativePath.Length > 0);
-            Contract.Ensures(Contract.Result<string[]>() != null);
+            Contract.Ensures(Contract.Result<IEnumerable<string>>() != null);
 
             var possiblePaths = GetPossiblePaths(relativePath);
             var existPaths = possiblePaths.Where(File.Exists);
-            return existPaths.OrderByDescending(t => File.GetLastWriteTime(t)).ToArray();
+            return existPaths.OrderByDescending(File.GetLastWriteTime);
         }
         public static string GetValidPath(string relativePath)
         {
@@ -39,6 +39,8 @@ namespace TommiUtility.FileSystem
 
             var validPath = GetValidPaths(relativePath).FirstOrDefault();
             if (validPath == null) throw new FileNotFoundException(null, relativePath);
+
+            Contract.Assume(validPath.Length > 0);
             return validPath;
         }
 

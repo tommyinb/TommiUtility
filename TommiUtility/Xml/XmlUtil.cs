@@ -105,7 +105,7 @@ namespace TommiUtility.Xml
 
         public static string GetIndentedXml(this XmlDocument xmlDocument)
         {
-            Contract.Requires<NullReferenceException>(xmlDocument != null);
+            Contract.Requires<ArgumentNullException>(xmlDocument != null);
             Contract.Ensures(Contract.Result<string>() != null);
 
             var stringBuilder = new StringBuilder();
