@@ -83,6 +83,16 @@ namespace TommiUtility.Collections
             return result[0];
         }
 
+        public static IEnumerable<TSource> Distinct<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+        {
+            Contract.Requires<ArgumentNullException>(source != null);
+            Contract.Requires<ArgumentNullException>(keySelector != null);
+            Contract.Ensures(Contract.Result<IEnumerable<TSource>>() != null);
+
+            var lookup = source.ToLookup(keySelector);
+            return lookup.Select(t => t.First());
+        }
+
         public static IEnumerable<T> Difference<T>(IEnumerable<T> first, IEnumerable<T> second)
         {
             Contract.Requires<ArgumentNullException>(first != null);
@@ -328,25 +338,31 @@ namespace TommiUtility.Collections
         }
 
         [TestMethod]
+        public void TestDistinct()
+        {
+            var input = new[] { "a1", "a2", "c1", "b1", "b2", "a3", "d1" };
+            var distinct = input.Distinct(t => t.First());
+            AssertUtil.SequenceEqual(new[] { "a1", "c1", "b1", "d1" }, distinct);
+        }
+
+        [TestMethod]
         public void TestDifference()
         {
             var abc = new[] { 1, 2, 3, 4, 5 };
             var bcd = new[] { 2, 4, 6 };
 
             var diff = EnumerableUtil.Difference(abc, bcd);
-            Assert.IsTrue(new[] { 1, 3, 5, 6 }.SequenceEqual(diff));
+            AssertUtil.SequenceEqual(new[] { 1, 3, 5, 6 }, diff);
         }
 
         [TestMethod]
         public void TestExcept()
         {
             var abc = new[] { 1, 6, 3, 4, 5 };
-
             var bcd = new[] { "123", "1234" };
 
             var result = abc.Except(bcd, (t, s) => t == s.Length).ToArray();
-
-            Assert.IsTrue(new[] { 1, 6, 5 }.SequenceEqual(result));
+            AssertUtil.SequenceEqual(new[] { 1, 6, 5 }, result);
         }
 
         [TestMethod]
@@ -482,9 +498,8 @@ namespace TommiUtility.Collections
             var expectedValues = Enumerable.Range(0, 100).Select(i => i * 2);
             AssertUtil.SequenceEqual(expectedValues, resultValues);
 
-            Contract.Assume(infinite.Count() > 0);
-            var firstHundred = infinite.First(t => t >= 100);
-            Assert.AreEqual(100, firstHundred);
+            var hundred = infinite.SkipWhile(t => t < 100).Take(1);
+            AssertUtil.SequenceEqual(new[] { 100 }, hundred);
         }
     }
 }
